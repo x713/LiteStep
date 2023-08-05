@@ -1,0 +1,49 @@
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    LiteStep 0.24.8
+    Developer Information
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+
+-- LITESTEP CORE DEVELOPMENT ---------------------------------------------------
+
+ For build instructions, please review
+
+  - build_vc6.txt   (official supported method)
+  - build_mingw.txt
+
+ The LiteStep source is segmented into separate code modules.  The source folder
+ structure represents these code modules.
+
+  \LiteStep
+    - Contains build environment project files
+
+  \LiteStep\litestep
+    - Contains the "litestep.exe" source files
+
+  \LiteStep\lsapi
+    - Contains the "lsapi.dll" source files
+
+  \LiteStep\hook
+    - Contains the "hook.dll" source files
+
+  \LiteStep\utility
+    - Contains common utility source files used across all code modules
+
+
+-- BINARY FILE DESCRIPTION -----------------------------------------------------
+
+ - litestep.exe     Main executable. Loads modules, handles window messages
+                    communication. Runs startup apps, includes DDE and tray
+                    services.
+
+ - lsapi.dll        LiteStep API for modules to use. Loads and parses step.rc;
+                    handles $evars$ and all other configuration. Manages !bang
+                    commands, includes core !bangs.
+
+ - hook.dll         The system shell hook used by some legacy LiteStep modules
+                    for receiving global system messages.
+
+-- LITESTEP MODULE DEVELOPMENT -------------------------------------------------
+
+ All modules should be built using the LiteStep Module SDK which is available
+ from www.lsdev.org
