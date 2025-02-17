@@ -1,0 +1,72 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35806.99 d17.13
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LiteStep", "LiteStep.vcxproj", "{F090D4CD-FDF2-4C3D-83EC-4012C6828ED6}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hook", "hook\hook.vcxproj", "{C00886D3-ED11-4067-B0D0-5407610168D6}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "utility", "utility\utility.vcxproj", "{A7EDA493-2684-4E50-8587-FAC2D090D7DF}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lsapi", "lsapi\lsapi.vcxproj", "{FBAA96F8-767C-4457-B4B7-35C77893BC1A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+	ProjectSection(SolutionItems) = preProject
+		docs\build.txt = docs\build.txt
+		docs\build_mingw.txt = docs\build_mingw.txt
+		docs\build_vc6.txt = docs\build_vc6.txt
+		docs\changes.txt = docs\changes.txt
+		docs\license.txt = docs\license.txt
+		docs\manual.txt = docs\manual.txt
+		docs\readme.txt = docs\readme.txt
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F090D4CD-FDF2-4C3D-83EC-4012C6828ED6}.Debug|x64.ActiveCfg = Debug|x64
+		{F090D4CD-FDF2-4C3D-83EC-4012C6828ED6}.Debug|x64.Build.0 = Debug|x64
+		{F090D4CD-FDF2-4C3D-83EC-4012C6828ED6}.Debug|x86.ActiveCfg = Debug|Win32
+		{F090D4CD-FDF2-4C3D-83EC-4012C6828ED6}.Debug|x86.Build.0 = Debug|Win32
+		{F090D4CD-FDF2-4C3D-83EC-4012C6828ED6}.Release|x64.ActiveCfg = Release|x64
+		{F090D4CD-FDF2-4C3D-83EC-4012C6828ED6}.Release|x64.Build.0 = Release|x64
+		{F090D4CD-FDF2-4C3D-83EC-4012C6828ED6}.Release|x86.ActiveCfg = Release|Win32
+		{F090D4CD-FDF2-4C3D-83EC-4012C6828ED6}.Release|x86.Build.0 = Release|Win32
+		{C00886D3-ED11-4067-B0D0-5407610168D6}.Debug|x64.ActiveCfg = Debug|x64
+		{C00886D3-ED11-4067-B0D0-5407610168D6}.Debug|x64.Build.0 = Debug|x64
+		{C00886D3-ED11-4067-B0D0-5407610168D6}.Debug|x86.ActiveCfg = Debug|Win32
+		{C00886D3-ED11-4067-B0D0-5407610168D6}.Debug|x86.Build.0 = Debug|Win32
+		{C00886D3-ED11-4067-B0D0-5407610168D6}.Release|x64.ActiveCfg = Release|x64
+		{C00886D3-ED11-4067-B0D0-5407610168D6}.Release|x64.Build.0 = Release|x64
+		{C00886D3-ED11-4067-B0D0-5407610168D6}.Release|x86.ActiveCfg = Release|Win32
+		{C00886D3-ED11-4067-B0D0-5407610168D6}.Release|x86.Build.0 = Release|Win32
+		{A7EDA493-2684-4E50-8587-FAC2D090D7DF}.Debug|x64.ActiveCfg = Debug|x64
+		{A7EDA493-2684-4E50-8587-FAC2D090D7DF}.Debug|x64.Build.0 = Debug|x64
+		{A7EDA493-2684-4E50-8587-FAC2D090D7DF}.Debug|x86.ActiveCfg = Debug|Win32
+		{A7EDA493-2684-4E50-8587-FAC2D090D7DF}.Debug|x86.Build.0 = Debug|Win32
+		{A7EDA493-2684-4E50-8587-FAC2D090D7DF}.Release|x64.ActiveCfg = Release|x64
+		{A7EDA493-2684-4E50-8587-FAC2D090D7DF}.Release|x64.Build.0 = Release|x64
+		{A7EDA493-2684-4E50-8587-FAC2D090D7DF}.Release|x86.ActiveCfg = Release|Win32
+		{A7EDA493-2684-4E50-8587-FAC2D090D7DF}.Release|x86.Build.0 = Release|Win32
+		{FBAA96F8-767C-4457-B4B7-35C77893BC1A}.Debug|x64.ActiveCfg = Debug|x64
+		{FBAA96F8-767C-4457-B4B7-35C77893BC1A}.Debug|x64.Build.0 = Debug|x64
+		{FBAA96F8-767C-4457-B4B7-35C77893BC1A}.Debug|x86.ActiveCfg = Debug|Win32
+		{FBAA96F8-767C-4457-B4B7-35C77893BC1A}.Debug|x86.Build.0 = Debug|Win32
+		{FBAA96F8-767C-4457-B4B7-35C77893BC1A}.Release|x64.ActiveCfg = Release|x64
+		{FBAA96F8-767C-4457-B4B7-35C77893BC1A}.Release|x64.Build.0 = Release|x64
+		{FBAA96F8-767C-4457-B4B7-35C77893BC1A}.Release|x86.ActiveCfg = Release|Win32
+		{FBAA96F8-767C-4457-B4B7-35C77893BC1A}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {9B95D6CA-BFAB-4A7E-A400-E09368FDCCA3}
+	EndGlobalSection
+EndGlobal
