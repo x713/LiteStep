@@ -72,4 +72,3 @@ x86/
 #*.rc
 *.vcxproj
 *.filters
-*.vcxproj.user
