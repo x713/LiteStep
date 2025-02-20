@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /****************************************************************************
 ****************************************************************************/ 
 /*
-	Provides routines useful for localizing code
+  Provides routines useful for localizing code
 */
 #include "localization.h"
 #include <stdio.h>
@@ -34,19 +34,19 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 // Obtains strings from litestep.exe's resources.
 //
-static void GetString(UINT uId, TCHAR* ptzBuffer, size_t cchBuffer,
-                      const TCHAR* ptzDefault)
+static void GetString(UINT uId, wchar_t* pwzBuffer, size_t cchBuffer,
+                      const wchar_t* pwzDefault)
 {
-    ASSERT_ISVALIDBUF(ptzBuffer, cchBuffer);
-    ASSERT_ISNOTNULL(ptzDefault);
-    
-    if (LoadString(GetModuleHandle(NULL), uId, ptzBuffer, cchBuffer) == 0)
+  ASSERT_ISVALIDBUF(pwzBuffer, cchBuffer);
+  ASSERT_ISNOTNULL(pwzDefault);
+
+    if (LoadString(GetModuleHandle(NULL), uId, pwzBuffer, static_cast<int>(cchBuffer)) == 0)
     {
-        HRESULT hr = StringCchCopy(ptzBuffer, cchBuffer, ptzDefault);
+        HRESULT hr = StringCchCopy(pwzBuffer, cchBuffer, pwzDefault);
         
         if (FAILED(hr) && hr != STRSAFE_E_INSUFFICIENT_BUFFER)
         {
-            *ptzBuffer = '\0';
+            *pwzBuffer = '\0';
         }
     }
 }
@@ -56,11 +56,11 @@ static void GetString(UINT uId, TCHAR* ptzBuffer, size_t cchBuffer,
 //
 // CheckedFormat
 //
-static void CheckedFormat(TCHAR* ptzBuffer, size_t cchBuffer,
-                          const TCHAR* ptzFormat, const va_list& vargs)
+static void CheckedFormat(wchar_t* pwzBuffer, size_t cchBuffer,
+                          const wchar_t* pwzFormat, const va_list& vargs)
 {
-    ASSERT_ISVALIDBUF(ptzBuffer, cchBuffer);
-    ASSERT_ISNOTNULL(ptzFormat);
+    ASSERT_ISVALIDBUF(pwzBuffer, cchBuffer);
+    ASSERT_ISNOTNULL(pwzFormat);
     
     HRESULT hr = E_FAIL;
     
@@ -68,7 +68,7 @@ static void CheckedFormat(TCHAR* ptzBuffer, size_t cchBuffer,
     try
     {
 #endif /* LS_NO_EXCEPTION */
-        hr = StringCchVPrintf(ptzBuffer, cchBuffer, ptzFormat, vargs);
+        hr = StringCchVPrintf(pwzBuffer, cchBuffer, pwzFormat, vargs);
 #if !defined(LS_NO_EXCEPTION)
     }
     catch (...)
@@ -80,7 +80,7 @@ static void CheckedFormat(TCHAR* ptzBuffer, size_t cchBuffer,
     
     if (FAILED(hr) && (hr != STRSAFE_E_INSUFFICIENT_BUFFER))
     {
-        StringCchCopy(ptzBuffer, cchBuffer, ptzFormat);
+        StringCchCopy(pwzBuffer, cchBuffer, pwzFormat);
     }
 }
 
@@ -89,45 +89,49 @@ static void CheckedFormat(TCHAR* ptzBuffer, size_t cchBuffer,
 //
 // DoError
 //
-static int DoError(const TCHAR* ptzText, const TCHAR* ptzCaption = NULL)
+static int DoError(const wchar_t* pwzText, const wchar_t* pwzCaption = NULL)
 {
-    ASSERT_ISNOTNULL(ptzText);
+    ASSERT_ISNOTNULL(pwzText);
 
-    TCHAR tzCaption[MAX_LINE_LENGTH] = { _T("LiteStep :: Error") };
+    wchar_t wzCaption[MAX_LINE_LENGTH] = { L"LiteStep :: Error" };
     
-    if (ptzCaption != NULL)
+    if (pwzCaption != NULL)
     {
-        StringCchPrintfEx(tzCaption, MAX_LINE_LENGTH,
+        StringCchPrintfEx(wzCaption, MAX_LINE_LENGTH,
             NULL, NULL, STRSAFE_NULL_ON_FAILURE,
-            _T("LiteStep :: %s :: Error"), ptzCaption);
+            L"LiteStep :: %s :: Error", pwzCaption);
     }
 
-    return MessageBox(NULL, ptzText, tzCaption,
+    return MessageBox(NULL, pwzText, wzCaption,
         MB_ICONERROR | MB_TOPMOST | MB_SETFOREGROUND);
 }
 
 
-//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-//
-// Error
-//
-void Error(UINT uMessageId, LPCTSTR ptzDefault, ...)
+void Error(UINT uMessageId, LPCWSTR pwzDefault, ...)
 {
-    ASSERT_ISNOTNULL(ptzDefault);
+    ASSERT_ISNOTNULL(pwzDefault);
 
-    TCHAR tzMessage[MAX_LINE_LENGTH] = { 0 };
-    TCHAR tzFormat[MAX_LINE_LENGTH] = { 0 };
-    
-    GetString(uMessageId, tzFormat, MAX_LINE_LENGTH, ptzDefault);
-    
-    va_list vargs;
-    va_start(vargs, ptzDefault);
-    
-    CheckedFormat(tzMessage, MAX_LINE_LENGTH, tzFormat, vargs);
-    
-    va_end(vargs);
-    
-    DoError(tzMessage);
+    // Allocate memory on the heap instead of the stack
+    wchar_t* wzMessage = new wchar_t[MAX_LINE_LENGTH];
+    wchar_t* wzFormat = new wchar_t[MAX_LINE_LENGTH];
+
+    if (wzMessage && wzFormat)
+    {
+        GetString(uMessageId, wzFormat, MAX_LINE_LENGTH, pwzDefault);
+
+        va_list vargs;
+        va_start(vargs, pwzDefault);
+
+        CheckedFormat(wzMessage, MAX_LINE_LENGTH, wzFormat, vargs);
+
+        va_end(vargs);
+
+        DoError(wzMessage);
+    }
+
+    // Free the allocated memory
+    delete[] wzMessage;
+    delete[] wzFormat;
 }
 
 
@@ -135,22 +139,34 @@ void Error(UINT uMessageId, LPCTSTR ptzDefault, ...)
 //
 // ErrorEx
 //
-void ErrorEx(LPCTSTR ptzCaption, UINT uMessageId, LPCTSTR ptzDefault, ...)
+void ErrorEx(LPCWSTR pwzCaption, UINT uMessageId, LPCWSTR pwzDefault) {
+  ErrorEx(pwzCaption, uMessageId, pwzDefault, nullptr);
+}
+
+void ErrorEx(LPCWSTR pwzCaption, UINT uMessageId, LPCWSTR pwzDefault, ...)
 {
-    ASSERT_ISNOTNULL(ptzDefault);
-    ASSERT_ISNOTNULL(ptzCaption);
-    
-    TCHAR tzFormat[MAX_LINE_LENGTH] = { 0 };
-    TCHAR tzMessage[MAX_LINE_LENGTH] = { 0 };
-    
-    GetString(uMessageId, tzFormat, MAX_LINE_LENGTH, ptzDefault);
-    
-    va_list vargs;
-    va_start(vargs, ptzDefault);
-    
-    CheckedFormat(tzMessage, MAX_LINE_LENGTH, tzFormat, vargs);
-    
-    va_end(vargs);
-    
-    DoError(tzMessage, ptzCaption);
+    ASSERT_ISNOTNULL(pwzDefault);
+    ASSERT_ISNOTNULL(pwzCaption);
+
+    // Allocate memory on the heap instead of the stack
+    wchar_t* wzFormat = new wchar_t[MAX_LINE_LENGTH];
+    wchar_t* wzMessage = new wchar_t[MAX_LINE_LENGTH];
+
+    if (wzFormat && wzMessage)
+    {
+        GetString(uMessageId, wzFormat, MAX_LINE_LENGTH, pwzDefault);
+
+        va_list vargs;
+        va_start(vargs, pwzDefault);
+
+        CheckedFormat(wzMessage, MAX_LINE_LENGTH, wzFormat, vargs);
+
+        va_end(vargs);
+
+        DoError(wzMessage, pwzCaption);
+    }
+
+    // Free the allocated memory
+    delete[] wzFormat;
+    delete[] wzMessage;
 }

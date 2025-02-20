@@ -1,6 +1,7 @@
 /*
 This is a part of the LiteStep Shell Source code.
 
+Copyright (C) 1997-2025 The x7 Dev Team
 Copyright (C) 1997-2002 The LiteStep Development Team
 
 This program is free software; you can redistribute it and/or
@@ -22,8 +23,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "common.h"
 
-void Error(UINT uMessageId, LPCTSTR ptzDefault, ...);
-void ErrorEx(LPCTSTR ptzCaption, UINT uMessageId, LPCTSTR ptzDefault, ...);
+#include <windows.h>
+
+void Error(UINT uMessageId, LPCWSTR pwzDefault, ...);
+void ErrorEx(LPCWSTR pwzCaption, UINT uMessageId, LPCWSTR pwzDefault, ...);
+void ErrorEx(LPCWSTR pwzCaption, UINT uMessageId, LPCWSTR pwzDefault);
 
 #define LOCALIZE_THIS 0
 

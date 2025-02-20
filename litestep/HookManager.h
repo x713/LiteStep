@@ -23,8 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../utility/common.h"
 #include "../hook/hook.h"
 
-#define HOOKMGRWINDOWNAME  TEXT("HookMgrWindow")
-#define HOOKMGRWINDOWCLASS TEXT("HookMgrClass")
+#define HOOKMGRWINDOWNAME  L"HookMgrWindow"
+#define HOOKMGRWINDOWCLASS L"HookMgrClass"
 
 typedef VOID (__cdecl* HOOKCALLBACKPROC)(HWND, UINT, WPARAM, LPARAM);
 

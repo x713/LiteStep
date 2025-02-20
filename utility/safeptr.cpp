@@ -16,14 +16,14 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-*/ 
+*/
 /****************************************************************************
 ****************************************************************************/
 #include "safeptr.h"
 
 BOOL IsValidStringPtrW(LPCWSTR lpwz)
 {
-	return (NULL != lpwz);
+  return (NULL != lpwz);
 }
 #ifdef __cplusplus
 BOOL IsValidStringPtrW(LPCWSTR lpwz, UINT_PTR ucchMax)
@@ -31,7 +31,7 @@ BOOL IsValidStringPtrW(LPCWSTR lpwz, UINT_PTR ucchMax)
 BOOL IsValidStringPtrCchW(LPCWSTR lpwz, UINT_PTR ucchMax)
 #endif
 {
-	return ((ucchMax > 0) && (NULL != lpwz));
+  return ((ucchMax > 0) && (NULL != lpwz));
 }
 #ifdef __cplusplus
 BOOL IsValidStringPtrW(LPWSTR lpwz)
@@ -39,7 +39,7 @@ BOOL IsValidStringPtrW(LPWSTR lpwz)
 BOOL IsValidStringWritePtrW(LPWSTR lpwz)
 #endif
 {
-	return (NULL != lpwz);
+  return (NULL != lpwz);
 }
 #ifdef __cplusplus
 BOOL IsValidStringPtrW(LPWSTR lpwz, UINT_PTR ucchMax)
@@ -47,12 +47,12 @@ BOOL IsValidStringPtrW(LPWSTR lpwz, UINT_PTR ucchMax)
 BOOL IsValidStringWritePtrCchW(LPWSTR lpwz, UINT_PTR ucchMax)
 #endif
 {
-	return ((ucchMax > 0) && (NULL != lpwz));
+  return ((ucchMax > 0) && (NULL != lpwz));
 }
 
 BOOL IsValidStringPtrA(LPCSTR lpsz)
 {
-	return (NULL != lpsz);
+  return (NULL != lpsz);
 }
 #ifdef __cplusplus
 BOOL IsValidStringPtrA(LPCSTR lpsz, UINT_PTR ucchMax)
@@ -60,7 +60,7 @@ BOOL IsValidStringPtrA(LPCSTR lpsz, UINT_PTR ucchMax)
 BOOL IsValidStringPtrCchA(LPCSTR lpsz, UINT_PTR ucchMax)
 #endif
 {
-	return ((ucchMax > 0) && (NULL != lpsz));
+  return ((ucchMax > 0) && (NULL != lpsz));
 }
 #ifdef __cplusplus
 BOOL IsValidStringPtrA(LPSTR lpsz)
@@ -68,7 +68,7 @@ BOOL IsValidStringPtrA(LPSTR lpsz)
 BOOL IsValidStringWritePtrA(LPSTR lpsz)
 #endif
 {
-	return (NULL != lpsz);
+  return (NULL != lpsz);
 }
 #ifdef __cplusplus
 BOOL IsValidStringPtrA(LPSTR lpsz, UINT_PTR ucchMax)
@@ -76,25 +76,25 @@ BOOL IsValidStringPtrA(LPSTR lpsz, UINT_PTR ucchMax)
 BOOL IsValidStringWritePtrCchA(LPSTR lpsz, UINT_PTR ucchMax)
 #endif
 {
-	return ((ucchMax > 0) && (NULL != lpsz));
+  return ((ucchMax > 0) && (NULL != lpsz));
 }
 
-BOOL IsValidReadPtr(CONST VOID *lp)
+BOOL IsValidReadPtr(CONST VOID* lp)
 {
-	return (NULL != lp);
+  return (NULL != lp);
 }
 #ifdef __cplusplus
-BOOL IsValidReadPtr(CONST VOID *lp, UINT_PTR ucb)
+BOOL IsValidReadPtr(CONST VOID* lp, UINT_PTR ucb)
 #else
-BOOL IsValidReadPtrUcb(CONST VOID *lp, UINT_PTR ucb)
+BOOL IsValidReadPtrUcb(CONST VOID* lp, UINT_PTR ucb)
 #endif
 {
-	return ((ucb > 0) && (NULL != lp));
+  return ((ucb > 0) && (NULL != lp));
 }
 
 BOOL IsValidWritePtr(LPVOID lp)
 {
-	return (NULL != lp);
+  return (NULL != lp);
 }
 #ifdef __cplusplus
 BOOL IsValidWritePtr(LPVOID lp, UINT_PTR ucb)
@@ -102,10 +102,10 @@ BOOL IsValidWritePtr(LPVOID lp, UINT_PTR ucb)
 BOOL IsValidWritePtrUcb(LPVOID lp, UINT_PTR ucb)
 #endif
 {
-	return ((ucb > 0) && (NULL != lp));
+  return ((ucb > 0) && (NULL != lp));
 }
 
 BOOL IsValidCodePtr(FARPROC lfpn)
 {
-	return (NULL != lfpn);
+  return (NULL != lfpn);
 }

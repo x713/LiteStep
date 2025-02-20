@@ -1,6 +1,7 @@
 /*
 This is a part of the LiteStep Shell Source code.
 
+Copyright (C) 2025 The x7 Dev Team
 Copyright (C) 1997-2002 The LiteStep Development Team
 
 This program is free software; you can redistribute it and/or
@@ -174,8 +175,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //---------------------------------------------------------
 // BANG COMMAND DEFINES
 //---------------------------------------------------------
-typedef void (__cdecl* BangCommand)(HWND hSender, LPCSTR pszArgs);
-typedef void (__cdecl* BangCommandEx)(HWND hSender, LPCSTR pszCommand, LPCSTR pszArgs);
+typedef void (__cdecl* BangCommand)(HWND hSender, LPCWSTR pwszArgs);
+typedef void (__cdecl* BangCommandEx)(HWND hSender, LPCWSTR pwszCommand, LPCWSTR pwszArgs);
 
 typedef struct _LMBANGCOMMANDA
 {
@@ -251,9 +252,9 @@ LSDESKTOPINFO;
 // ELD_MODULES: possible dwFlags values
 #define LS_MODULE_THREADED  0x0001
 
-typedef BOOL (__stdcall* LSENUMBANGSPROC)(LPCSTR, LPARAM);
-typedef BOOL (__stdcall* LSENUMREVIDSPROC)(LPCSTR, LPARAM);
-typedef BOOL (__stdcall* LSENUMMODULESPROC)(LPCSTR, DWORD, LPARAM);
+typedef BOOL (__stdcall* LSENUMBANGSPROC)(LPCWSTR, LPARAM);
+typedef BOOL (__stdcall* LSENUMREVIDSPROC)(LPCWSTR, LPARAM);
+typedef BOOL (__stdcall* LSENUMMODULESPROC)(LPCWSTR, DWORD, LPARAM);
 
 
 #endif // __LSAPIDEFINES_H

@@ -37,11 +37,11 @@ DWORD DDEService::m_dwDDEInst;
 
 DDEService::DDEService()
 {
-	m_hszProgman = NULL;
-	m_hszGroups = NULL;
-	m_hszFolders = NULL;
-	m_hszAppProperties = NULL;
-	m_dwDDEInst = 0;
+  m_hszProgman = NULL;
+  m_hszGroups = NULL;
+  m_hszFolders = NULL;
+  m_hszAppProperties = NULL;
+  m_dwDDEInst = 0;
     m_hStartEvent = NULL;
 }
 
@@ -108,13 +108,13 @@ HRESULT DDEService::Start()
     }
         
 
-	return hr;
+  return hr;
 }
 
 
 HRESULT DDEService::Stop()
 {
-	HRESULT hr = S_OK;
+  HRESULT hr = S_OK;
 
     if (m_hThread)
     {
@@ -191,88 +191,88 @@ HDDEDATA CALLBACK DDEService::DdeCallback(
     DWORD /* lData1 */,
     DWORD /* lData2 */)
 {
-	HDDEDATA hReturn = (HDDEDATA)FALSE;
+  HDDEDATA hReturn = (HDDEDATA)FALSE;
 
-	switch (wType)
-	{
-		case XTYP_CONNECT:
-		{
-			hReturn = (HDDEDATA)TRUE;
-		}
-		break;
+  switch (wType)
+  {
+    case XTYP_CONNECT:
+    {
+      hReturn = (HDDEDATA)TRUE;
+    }
+    break;
 
-		case XTYP_WILDCONNECT:
-		{
-			HSZPAIR FAR *phszp;
-			DWORD cb;
+    case XTYP_WILDCONNECT:
+    {
+      HSZPAIR FAR *phszp;
+      DWORD cb;
 
-			if ((!hszTopic || hszTopic == m_hszProgman) &&
+      if ((!hszTopic || hszTopic == m_hszProgman) &&
                 (!hszItem || hszItem == m_hszProgman))
-			{
+      {
                 HDDEDATA hData = DdeCreateDataHandle(m_dwDDEInst, NULL,
                     2 * sizeof(HSZPAIR), 0L, 0, 0, 0);
 
                 if (hData)
-				{
-					phszp = (HSZPAIR FAR *)DdeAccessData(hData, &cb);
-					phszp[0].hszSvc = m_hszProgman;
-					phszp[0].hszTopic = m_hszProgman;
-					phszp[1].hszSvc = phszp[1].hszTopic = 0;
-					DdeUnaccessData(hData);
-					hReturn = hData;
-				}
-			}
-		}
-		break;
+        {
+          phszp = (HSZPAIR FAR *)DdeAccessData(hData, &cb);
+          phszp[0].hszSvc = m_hszProgman;
+          phszp[0].hszTopic = m_hszProgman;
+          phszp[1].hszSvc = phszp[1].hszTopic = 0;
+          DdeUnaccessData(hData);
+          hReturn = hData;
+        }
+      }
+    }
+    break;
 
-		case XTYP_EXECUTE:
-		{
-			if ((hszTopic == m_hszGroups) || (hszTopic == m_hszAppProperties))
-			{
-				TCHAR tzBuf[MAX_PATH];
-				DdeGetData(hData, (LPBYTE)tzBuf, MAX_PATH, 0);
-				tzBuf[MAX_PATH - 1] = '\0';
-				if (m_DDEWorker.ParseRequest(tzBuf))
-				{
-					hReturn = (HDDEDATA)DDE_FACK;
-				}
-			}
-		}
-		break;
+    case XTYP_EXECUTE:
+    {
+      if ((hszTopic == m_hszGroups) || (hszTopic == m_hszAppProperties))
+      {
+        TCHAR tzBuf[MAX_PATH];
+        DdeGetData(hData, (LPBYTE)tzBuf, MAX_PATH, 0);
+        tzBuf[MAX_PATH - 1] = '\0';
+        if (m_DDEWorker.ParseRequest(tzBuf))
+        {
+          hReturn = (HDDEDATA)DDE_FACK;
+        }
+      }
+    }
+    break;
 
-		case XTYP_ADVSTART:
-		case XTYP_ADVSTOP:
-		{
-			if (wFmt == CF_TEXT)
-			{
-				hReturn = (HDDEDATA)TRUE;
-			}
-		}
-		break;
+    case XTYP_ADVSTART:
+    case XTYP_ADVSTOP:
+    {
+      if (wFmt == CF_TEXT)
+      {
+        hReturn = (HDDEDATA)TRUE;
+      }
+    }
+    break;
 
-		case XTYP_REQUEST:
-		case XTYP_ADVREQ:
-		{
-			if ((wFmt == CF_TEXT) && ((hszTopic == m_hszProgman) && (hszItem == m_hszGroups)))
-			{
-				LPVOID pList = NULL;
-				UINT ulLen = 0;
+    case XTYP_REQUEST:
+    case XTYP_ADVREQ:
+    {
+      if ((wFmt == CF_TEXT) && ((hszTopic == m_hszProgman) && (hszItem == m_hszGroups)))
+      {
+        LPVOID pList = NULL;
+        UINT ulLen = 0;
 
-				if (m_DDEWorker.ListGroups(pList, ulLen))
-				{
-					hReturn = DdeCreateDataHandle(m_dwDDEInst, (LPBYTE)pList, ulLen, 0L,
-					                              m_hszGroups, CF_TEXT, 0);
-					HeapFree(GetProcessHeap(), 0, pList);
-				}
-			}
-		}
-		break;
-		
-		default:
-		break;
-	}
+        if (m_DDEWorker.ListGroups(pList, ulLen))
+        {
+          hReturn = DdeCreateDataHandle(m_dwDDEInst, (LPBYTE)pList, ulLen, 0L,
+                                        m_hszGroups, CF_TEXT, 0);
+          HeapFree(GetProcessHeap(), 0, pList);
+        }
+      }
+    }
+    break;
+    
+    default:
+    break;
+  }
 
-	return hReturn;
+  return hReturn;
 }
 
 #ifdef _UNICODE
@@ -283,31 +283,31 @@ HDDEDATA CALLBACK DDEService::DdeCallback(
 
 HRESULT DDEService::_RegisterDDE()
 {
-	HRESULT hr = E_FAIL;
+  HRESULT hr = E_FAIL;
 
-	m_hszProgman = DdeCreateStringHandle(m_dwDDEInst, _T("PROGMAN"), DDE_CP);
-	if (m_hszProgman != 0L)
-	{
-		m_hszGroups = DdeCreateStringHandle(m_dwDDEInst, _T("Groups"), DDE_CP);
-		if (m_hszGroups != 0L)
-		{
-			m_hszFolders = DdeCreateStringHandle(m_dwDDEInst, _T("Folders"), DDE_CP);
-			if (m_hszFolders != 0L)
-			{
-				m_hszAppProperties = DdeCreateStringHandle(m_dwDDEInst, _T("AppProperties"), DDE_CP);
-				if (m_hszAppProperties != 0L)
-				{
-					if (DdeNameService(m_dwDDEInst, m_hszProgman, 0L, DNS_REGISTER) != 0L)
-					{
-						if (DdeNameService(m_dwDDEInst, m_hszFolders, 0L, DNS_REGISTER) != 0L)
-						{
-							hr = S_OK;
-						}
-					}
-				}
-			}
-		}
-	}
+  m_hszProgman = DdeCreateStringHandle(m_dwDDEInst, _T("PROGMAN"), DDE_CP);
+  if (m_hszProgman != 0L)
+  {
+    m_hszGroups = DdeCreateStringHandle(m_dwDDEInst, _T("Groups"), DDE_CP);
+    if (m_hszGroups != 0L)
+    {
+      m_hszFolders = DdeCreateStringHandle(m_dwDDEInst, _T("Folders"), DDE_CP);
+      if (m_hszFolders != 0L)
+      {
+        m_hszAppProperties = DdeCreateStringHandle(m_dwDDEInst, _T("AppProperties"), DDE_CP);
+        if (m_hszAppProperties != 0L)
+        {
+          if (DdeNameService(m_dwDDEInst, m_hszProgman, 0L, DNS_REGISTER) != 0L)
+          {
+            if (DdeNameService(m_dwDDEInst, m_hszFolders, 0L, DNS_REGISTER) != 0L)
+            {
+              hr = S_OK;
+            }
+          }
+        }
+      }
+    }
+  }
 
-	return hr;
+  return hr;
 }

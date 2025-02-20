@@ -73,15 +73,15 @@
 #if defined(_DEBUG)
 namespace debug
 {
-    template <class Tracer> inline void Trace(const char* pszFormat, ...)
+    template <class Tracer> inline void Trace(const wchar_t* pszFormat, ...)
     {
         ASSERT_ISNOTNULL(pszFormat);
         
         va_list args;
         va_start(args, pszFormat);
         
-        char szBuffer[512];
-        StringCchVPrintfExA(szBuffer, 512, NULL, NULL, STRSAFE_NULL_ON_FAILURE,
+        wchar_t szBuffer[512];
+        StringCchVPrintfExW(szBuffer, 512, NULL, NULL, STRSAFE_NULL_ON_FAILURE,
             pszFormat, args);
         
         Tracer::Output(szBuffer);
@@ -92,26 +92,26 @@ namespace debug
     template <class Tracer> class PrefixedOutput
     {
         unsigned int m_uLine;
-        const char* m_pszFile;
+        const wchar_t* m_pszFile;
         
     public:
-        PrefixedOutput(unsigned int uLine, const char* pszFile) :
+        PrefixedOutput(unsigned int uLine, const wchar_t* pszFile) :
           m_uLine(uLine), m_pszFile(pszFile) {}
           
-        void operator()(const char* pszFormat, ...)
+        void operator()(const wchar_t* pszFormat, ...)
         {
             ASSERT_ISNOTNULL(pszFormat);
-            char szFormatBuffer[512] = { 0 };
+            wchar_t szFormatBuffer[512] = { 0 };
             
-            StringCchPrintfExA(szFormatBuffer, 512, NULL, NULL,
-                STRSAFE_NULL_ON_FAILURE, "%s (%u) : %s", m_pszFile, m_uLine,
+            StringCchPrintfExW(szFormatBuffer, 512, NULL, NULL,
+                STRSAFE_NULL_ON_FAILURE, L"%s (%u) : %s", m_pszFile, m_uLine,
                 pszFormat);
             
             va_list args;
             va_start(args, pszFormat);
-            char szBuffer[4096] = { 0 };
+            wchar_t szBuffer[4096] = { 0 };
             
-            StringCchVPrintfExA(szBuffer, 4096, NULL, NULL,
+            StringCchVPrintfExW(szBuffer, 4096, NULL, NULL,
                 STRSAFE_NULL_ON_FAILURE, szFormatBuffer, args);
             
             Tracer::Output(szBuffer);
@@ -134,13 +134,13 @@ namespace debug
 
 struct DebugOutputTracer
 {
-    static void Output(const char* pszText)
+    static void Output(const wchar_t* pszText)
     {
-        OutputDebugStringA(pszText);
+        OutputDebugStringW(pszText);
 
     #if !defined(__GNUC__)
         // This just outputs a blank line in gdb
-        OutputDebugStringA("\n");
+        OutputDebugStringW(L"\n");
     #endif
     }
 };
@@ -155,6 +155,7 @@ namespace debug
 {
     // dummy function, just needs the correct signature
     inline void TraceDummy(const char*, ...) {}
+    inline void TraceDummy(const wchar_t*, ...) {}
 }
 
 #define TRACE  1 ? (void)0 : debug::TraceDummy
@@ -174,7 +175,7 @@ namespace debug
 
 namespace debug
 {
-    inline void TraceLastError(const char* pszDescription)
+    inline void TraceLastError(const wchar_t* pszDescription)
     {
         ASSERT_ISNOTNULL(pszDescription);
         void* pvBuffer;
@@ -186,23 +187,23 @@ namespace debug
             NULL,
             GetLastError(),
             0,
-            (LPSTR)&pvBuffer,
+            (LPWSTR)&pvBuffer,
             0,
             NULL
             );
         
-        TRACE("Last Error (%s) = %s", pszDescription, (const char*)pvBuffer);
+        TRACE(L"Last Error (%s) = %s", pszDescription, (const wchar_t*)pvBuffer);
         LocalFree(pvBuffer);
     }
     
     class TraceFunction
     {
-        const char* m_pszName;
+        const wchar_t* m_pszName;
     public:
-        TraceFunction(const char* pszName) : m_pszName(pszName)
-        { TRACE("%s - entered", m_pszName); }
+        TraceFunction(const wchar_t* pszName) : m_pszName(pszName)
+        { TRACE(L"%s - entered", m_pszName); }
         ~TraceFunction()
-        { TRACE("%s - left", m_pszName); }
+        { TRACE(L"%s - left", m_pszName); }
     };
 }
 

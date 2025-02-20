@@ -20,6 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __WHARFDATA_H
 #define __WHARFDATA_H
 
+#include <Windows.h>
+
 typedef struct
 {
 	HWND Handle;

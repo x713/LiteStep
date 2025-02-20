@@ -23,34 +23,34 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../utility/common.h"
 #include "../utility/safestr.h"
 
-BOOL WINAPI LSLog(int nLevel, LPCSTR pszModule, LPCSTR pszMessage)
+BOOL WINAPI LSLog(int nLevel, LPCWSTR pwszModule, LPCWSTR pwszMessage)
 {
 #ifdef LS_COMPAT_LOGGING
 
-    char szLogFile[MAX_PATH] = { 0 };
-	
-    int nLogLevel = GetRCInt("LSLogLevel", 2);
+    wchar_t wszLogFile[MAX_PATH] = { 0 };
+  
+    int nLogLevel = GetRCInt(L"LSLogLevel", 2);
     
     // Should this message be logged?
-    if (!pszModule || !pszMessage ||
+    if (!pwszModule || !pwszMessage ||
         (nLevel > nLogLevel) || (nLevel < 1) || (nLevel > 4))
     {
         return FALSE;
     }
 
     // Has a log file been assigned?
-    if (!GetRCString("LSLogFile", szLogFile, NULL, MAX_PATH))
+    if (!GetRCString(L"LSLogFile", wszLogFile, NULL, MAX_PATH))
     {
         return FALSE;
     }
 
-	// If so, open it
-	HANDLE hLogFile = CreateFile(szLogFile, 
-		GENERIC_WRITE,
-		FILE_SHARE_READ | FILE_SHARE_WRITE,
-		NULL,
-		OPEN_ALWAYS,
-		FILE_ATTRIBUTE_NORMAL,
+  // If so, open it
+  HANDLE hLogFile = CreateFile(wszLogFile,
+    GENERIC_WRITE,
+    FILE_SHARE_READ | FILE_SHARE_WRITE,
+    NULL,
+    OPEN_ALWAYS,
+    FILE_ATTRIBUTE_NORMAL,
         NULL);
     
     // Did open succeed?
@@ -67,22 +67,22 @@ BOOL WINAPI LSLog(int nLevel, LPCSTR pszModule, LPCSTR pszMessage)
     GetLocalTime(&st);
     
     // Add timestamp and module name to message
-    LPCSTR rszLevel[4] = { "Error", "Warning", "Notice", "Debug" };
+    LPCWSTR rwszLevel[4] = { L"Error", L"Warning", L"Notice", L"Debug" };
     
-    TCHAR szLine[MAX_LINE_LENGTH] = { 0 };
-    size_t cbLine = sizeof(szLine);
+    TCHAR wszLine[MAX_LINE_LENGTH] = { 0 };
+    size_t cbLine = sizeof(wszLine);
     size_t cbRemaining = 0;
     
-    if (SUCCEEDED(StringCbPrintfEx(szLine, cbLine, NULL, &cbRemaining,
-        STRSAFE_IGNORE_NULLS, "%02d-%02d-%04d %02d:%02d:%02d - %s - %s: %s\r\n",
+    if (SUCCEEDED(StringCbPrintfEx(wszLine, cbLine, NULL, &cbRemaining,
+        STRSAFE_IGNORE_NULLS, L"%02d-%02d-%04d %02d:%02d:%02d - %s - %s: %s\r\n",
         st.wMonth, st.wDay, st.wYear, st.wHour, st.wMinute, st.wSecond,
-        rszLevel[nLevel-1], pszModule, pszMessage)))
+        rwszLevel[nLevel-1], pwszModule, pwszMessage)))
     {
         DWORD cbToWrite = cbLine - cbRemaining;
 
         // Write it to the log file
         DWORD dwCount = 0;
-        WriteFile(hLogFile, szLine, cbToWrite, &dwCount, NULL);
+        WriteFile(hLogFile, wszLine, cbToWrite, &dwCount, NULL);
     }
     
     // Close the log
@@ -92,25 +92,27 @@ BOOL WINAPI LSLog(int nLevel, LPCSTR pszModule, LPCSTR pszMessage)
     return TRUE;
 }
 
-BOOL WINAPIV LSLogPrintf(int nLevel, LPCSTR pszModule, LPCSTR pszFormat, ...)
+
+
+BOOL WINAPIV LSLogPrintf(int nLevel, LPCWSTR pwszModule, LPCWSTR pwszFormat, ...)
 {
 #ifdef LS_COMPAT_LOGGING
 
-    if (!pszModule || !pszFormat)
+    if (!pwszModule || !pwszFormat)
     {
         return FALSE;
     }
 
     BOOL bReturn = FALSE;
-    char szMessage[MAX_LINE_LENGTH];
+    wchar_t szMessage[MAX_LINE_LENGTH];
 
     va_list argList;
-    va_start(argList, pszFormat);
+    va_start(argList, pwszFormat);
     
     if (SUCCEEDED(StringCchVPrintf(szMessage, MAX_LINE_LENGTH,
-        pszFormat, argList)))
+        pwszFormat, argList)))
     {
-        bReturn = LSLog(nLevel, pszModule, szMessage);
+        bReturn = LSLog(nLevel, pwszModule, szMessage);
     }
 
     va_end(argList);
@@ -123,95 +125,101 @@ BOOL WINAPIV LSLogPrintf(int nLevel, LPCSTR pszModule, LPCSTR pszFormat, ...)
 #endif // LS_COMPAT_LOGGING
 }
 
-int GetRCCoordinate(LPCSTR pszKeyName, int nDefault, int nMaxVal)
-{
-	char strVal[MAX_LINE_LENGTH];
 
-	if (!GetRCString(pszKeyName, strVal, NULL, MAX_LINE_LENGTH))
+
+
+int GetRCCoordinate(LPCWSTR pwszKeyName, int nDefault, int nMaxVal)
+{
+  wchar_t strVal[MAX_LINE_LENGTH];
+
+  if (!GetRCString(pwszKeyName, strVal, NULL, MAX_LINE_LENGTH))
     {
         return nDefault;
     }
 
-	return ParseCoordinate(strVal, nDefault, nMaxVal);
+  return ParseCoordinate(strVal, nDefault, nMaxVal);
 }
 
-int ParseCoordinate(LPCSTR szString, int nDefault, int nMaxVal)
+
+
+
+int ParseCoordinate(LPCWSTR wszString, int nDefault, int nMaxVal)
 {
-	BOOL negative = false;
-	BOOL center = false;
-	BOOL percentual = false;
+  BOOL negative = false;
+  BOOL center = false;
+  BOOL percentual = false;
 
-	int value = 0;
+  int value = 0;
 
-	if (!szString || !szString[0])
+  if (!wszString || !wszString[0])
     {
         return nDefault;
     }
 
-	if (szString[0] == '-')
-	{
-		negative = true;
-		szString++;
-	}
-	else if (szString[0] == '+')
-	{
-		szString++;
-	}
+  if (wszString[0] == '-')
+  {
+    negative = true;
+    wszString++;
+  }
+  else if (wszString[0] == '+')
+  {
+    wszString++;
+  }
 
-	size_t length = strlen(szString);
-	size_t i = 0;
+  size_t length = wcslen(wszString);
+  size_t i = 0;
 
-	while (i < length)
-	{
-		if (szString[i] >= '0' && szString[i] <= '9')
-			value = (value * 10) + (szString[i] - '0');
-		else
-			break;
+  while (i < length)
+  {
+    if (wszString[i] >= '0' && wszString[i] <= '9')
+      value = (value * 10) + (wszString[i] - '0');
+    else
+      break;
 
-		++i;
-	}
+    ++i;
+  }
 
-	if (i == 0)
-		return nDefault;
+  if (i == 0)
+    return nDefault;
 
-	while (i < length)
-	{
-		if (szString[i] == 'c' || szString[i] == 'C' && !center)
-			center = true;
+  while (i < length)
+  {
+    if (wszString[i] == 'c' || wszString[i] == 'C' && !center)
+      center = true;
 
-		else if (szString[i] == '%' && !percentual)
-			percentual = true;
+    else if (wszString[i] == '%' && !percentual)
+      percentual = true;
 
-		else
-			//		{
-			//			LSLogPrintf(LOG_WARNING, "SettingsManager", "incorrect coordinate (%s), using \"%s%d%s%s\"", strVal, negative?"-":"",value, percentual?"%":"", center?"c":"");
-			break;
-		//		}
+    else
+      //		{
+      //			LSLogPrintf(LOG_WARNING, "SettingsManager", "incorrect coordinate (%s), using \"%s%d%s%s\"", strVal, negative?"-":"",value, percentual?"%":"", center?"c":"");
+      break;
+    //		}
 
-		++i;
-	}
+    ++i;
+  }
 
-	if (percentual)
-		value = nMaxVal * value / 100;
+  if (percentual)
+    value = nMaxVal * value / 100;
 
-	if (center)
-	{
-		if (negative)
-			value = (nMaxVal / 2) - value;
-		else
-			value = (nMaxVal / 2) + value;
-	}
-	/*	else if (percentual) // percentual positioning ie 30% from left side, -30% to count from right
-		{
-			if (negative)
-				value = nMaxVal*(1-value/100);
-			else
-				value = nMaxVal*value/100;
-		}*/
-	else if (negative)
-	{
-		value = nMaxVal - value;
-	}
+  if (center)
+  {
+    if (negative)
+      value = (nMaxVal / 2) - value;
+    else
+      value = (nMaxVal / 2) + value;
+  }
+  /*	else if (percentual) // percentual positioning ie 30% from left side, -30% to count from right
+    {
+      if (negative)
+        value = nMaxVal*(1-value/100);
+      else
+        value = nMaxVal*value/100;
+    }*/
+  else if (negative)
+  {
+    value = nMaxVal - value;
+  }
 
-	return value;
+  return value;
 }

@@ -23,15 +23,20 @@
 #include "MathEvaluate.h"
 
 
+
+
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 //
 // FileParser constructor
 //
 FileParser::FileParser(SettingsMap* pSettingsMap)
-: m_pSettingsMap(pSettingsMap), m_phFile(NULL)
+  : m_pSettingsMap(pSettingsMap), m_phFile(NULL)
 {
-    ASSERT(NULL != m_pSettingsMap);
+  ASSERT(NULL != m_pSettingsMap);
 }
+
+
+
 
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -43,56 +48,65 @@ FileParser::~FileParser()
 }
 
 
+
+
+
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 //
 // ParseFile
 //
-void FileParser::ParseFile(LPCTSTR ptzFileName)
+void FileParser::ParseFile(LPCWSTR pwzFileName)
 {
-    ASSERT(NULL == m_phFile);    // in case of possible threading problem?
-    ASSERT(NULL != ptzFileName);
-    
-    TCHAR tzExpandedPath[MAX_PATH_LENGTH];
-    
-    VarExpansionEx(tzExpandedPath, ptzFileName, MAX_PATH_LENGTH);
-    PathUnquoteSpaces(tzExpandedPath);
-    
-    DWORD dwLen;
-    dwLen = GetFullPathName(tzExpandedPath, MAX_PATH_LENGTH, m_tzFullPath, NULL);
-    
-    if(0 == dwLen || dwLen > MAX_PATH_LENGTH)
-    {
-        TRACE("Error: Can not get full path for \"%s\"", tzExpandedPath);
-        return;
-    }
-    
-    m_phFile = fopen(m_tzFullPath, "r");
-    
-    if(NULL == m_phFile)
-    {
-        TRACE("Error: Can not open file \"%s\" (Defined as \"%s\").", m_tzFullPath, ptzFileName);
-        return;
-    }
-    
-    TRACE("Parsing \"%s\"", m_tzFullPath);
-    
-    fseek(m_phFile, 0, SEEK_SET);
-    
-    TCHAR tzKey[MAX_RCCOMMAND] = { 0 };
-    TCHAR tzValue[MAX_LINE_LENGTH] = { 0 };
-    
-    m_uLineNumber = 0;
-    
-    while(_ReadLineFromFile(tzKey, tzValue))
-    {
-        _ProcessLine(tzKey, tzValue);
-    }
-    
-    fclose(m_phFile);
-    m_phFile = NULL;
-    
-    TRACE("Finished Parsing \"%s\"", m_tzFullPath);
+  ASSERT(NULL == m_phFile);    // in case of possible threading problem?
+  ASSERT(NULL != pwzFileName);
+
+  TCHAR tzExpandedPath[MAX_PATH_LENGTH];
+
+  VarExpansionEx(tzExpandedPath, pwzFileName, MAX_PATH_LENGTH);
+  PathUnquoteSpaces(tzExpandedPath);
+
+  DWORD dwLen;
+  dwLen = GetFullPathName(tzExpandedPath, MAX_PATH_LENGTH, m_wzFullPath, NULL);
+
+  if (0 == dwLen || dwLen > MAX_PATH_LENGTH)
+  {
+    TRACE(L"Error: Can not get full path for \"%s\"", tzExpandedPath);
+    return;
+  }
+
+  
+  //FILE* hFile; // Note: No initialization here
+  //m_phFile = _wfopen(m_wzFullPath, L"r");
+  errno_t err = _wfopen_s(&m_phFile, m_wzFullPath, L"rb"); // Use _wfopen_s
+
+
+  //if (NULL == m_phFile)  
+  if (err != 0) {
+    TRACE(L"Error: Can not open file \"%s\" (Defined as \"%s\").", m_wzFullPath, pwzFileName);
+    return;
+  }
+
+  TRACE(L"Parsing \"%s\"", m_wzFullPath);
+
+  fseek(m_phFile, 0, SEEK_SET);
+
+  TCHAR tzKey[MAX_RCCOMMAND] = { 0 };
+  TCHAR tzValue[MAX_LINE_LENGTH] = { 0 };
+
+  m_uLineNumber = 0;
+
+  while (_ReadLineFromFile(tzKey, tzValue))
+  {
+    _ProcessLine(tzKey, tzValue);
+  }
+
+  fclose(m_phFile);
+  m_phFile = NULL;
+
+  TRACE(L"Finished Parsing \"%s\"", m_wzFullPath);
 }
+
+
 
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -102,267 +116,273 @@ void FileParser::ParseFile(LPCTSTR ptzFileName)
 // ptzName must be MAX_RCCOMMAND size
 // ptzValue must be MAX_LINE_LENGTH size (or NULL)
 //
-bool FileParser::_ReadLineFromFile(LPTSTR ptzName, LPTSTR ptzValue)
+bool FileParser::_ReadLineFromFile(LPWSTR pwzName, LPWSTR pwzValue)
 {
-    ASSERT(NULL != m_phFile);
-    ASSERT(NULL != ptzName);
-    
-    TCHAR tzBuffer[MAX_LINE_LENGTH];
-    bool bReturn = false;
-    
-    while (!feof(m_phFile) && !bReturn)
+  ASSERT(NULL != m_phFile);
+  ASSERT(NULL != pwzName);
+
+  wchar_t tzBuffer[MAX_LINE_LENGTH];
+  bool bReturn = false;
+
+  while (!feof(m_phFile) && !bReturn)
+  {
+    if (!fgetws(tzBuffer, MAX_LINE_LENGTH, m_phFile))
     {
-        if (!fgets(tzBuffer, MAX_LINE_LENGTH, m_phFile))
-        {
-            // End Of File or an Error occured. We don't care which.
-            break;
-        }
-        
-        m_uLineNumber++;
-        
-        LPTSTR ptzCurrent = tzBuffer;
-        
-        // Jump over any initial whitespace
-        ptzCurrent += strspn(ptzCurrent, WHITESPACE);
-        
-        // Ignore empty lines, and comments
-        if (ptzCurrent[0] && ptzCurrent[0] != ';')
-        {
-            // End on first reserved character or whitespace
-            size_t stEndConfig = strcspn(ptzCurrent, WHITESPACE RESERVEDCHARS);
-            
-            // If the character is not whitespace or a comment
-            // then the line has an invalid format.  Ignore it.
-            if (strchr(WHITESPACE ";", ptzCurrent[stEndConfig]) == NULL)
-            {
-                TRACE("Syntax Error (%s, %d): Invalid line format",
-                    m_tzFullPath, m_uLineNumber);
-                continue;
-            }
-            
-            // Copy directive name to ptzName.
-            if (stEndConfig && SUCCEEDED(StringCchCopyN(ptzName, MAX_RCCOMMAND, ptzCurrent, stEndConfig)))
-            {
-                // If ptzValue is NULL, then the caller doesn't want the value,
-                // however, we still will return TRUE.  If the caller does want
-                // the value, then we need to ensure we put something into the
-                // buffer, even if its is zero length.
-                if (ptzValue != NULL)
-                {
-                    LPTSTR ptzValueStart = ptzCurrent + stEndConfig;
-                    
-                    // Avoid expensive in-place copy from _StripString
-                    // Simply increment passed any whitespace, here.
-                    ptzValueStart += strspn(ptzValueStart, WHITESPACE);
-                    
-                    // Removing trailing whitespace and comments
-                    _StripString(ptzValueStart);
-                    
-                    StringCchCopy(ptzValue, MAX_LINE_LENGTH, ptzValueStart);
-                }
-                
-                bReturn = true;
-            }
-        }
+      // End Of File or an Error occured. We don't care which.
+      break;
     }
-    
-    return bReturn;
+
+    m_uLineNumber++;
+
+    LPWSTR pwzCurrent = tzBuffer;
+
+    // Jump over any initial whitespace
+    pwzCurrent += wcsspn(pwzCurrent, WHITESPACE);
+
+    // Ignore empty lines, and comments
+    if (pwzCurrent[0] && pwzCurrent[0] != ';')
+    {
+      // End on first reserved character or whitespace
+      size_t stEndConfig = wcscspn(pwzCurrent, WHITESPACE RESERVEDCHARS);
+
+      // If the character is not whitespace or a comment
+      // then the line has an invalid format.  Ignore it.
+      // TODO  : This is a bit of a hack, to check 
+      if (wcschr(WHITESPACE ";", pwzCurrent[stEndConfig]) == NULL)
+      {
+        TRACE(L"Syntax Error (%s, %d): Invalid line format",
+          m_wzFullPath, m_uLineNumber);
+        continue;
+      }
+
+      // Copy directive name to ptzName.
+      if (stEndConfig && SUCCEEDED(StringCchCopyN(pwzName, MAX_RCCOMMAND, pwzCurrent, stEndConfig)))
+      {
+        // If ptzValue is NULL, then the caller doesn't want the value,
+        // however, we still will return TRUE.  If the caller does want
+        // the value, then we need to ensure we put something into the
+        // buffer, even if its is zero length.
+        if (pwzValue != NULL)
+        {
+          LPWSTR pwzValueStart = pwzCurrent + stEndConfig;
+
+          // Avoid expensive in-place copy from _StripString
+          // Simply increment passed any whitespace, here.
+          pwzValueStart += wcsspn(pwzValueStart, WHITESPACE);
+
+          // Removing trailing whitespace and comments
+          _StripString(pwzValueStart);
+
+          StringCchCopy(pwzValue, MAX_LINE_LENGTH, pwzValueStart);
+        }
+
+        bReturn = true;
+      }
+    }
+  }
+
+  return bReturn;
 }
+
+
 
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 //
 // _StripString
 //
-void FileParser::_StripString(LPTSTR ptzString)
+void FileParser::_StripString(LPWSTR pwzString)
 {
-    ASSERT(NULL != ptzString);
-    
-    LPTSTR ptzCurrent = ptzString;
-    LPTSTR ptzStart = NULL;
-    LPTSTR ptzLast = NULL;
-    size_t stQuoteLevel = 0;
-    TCHAR tLastQuote = '\0';
-    
-    while (*ptzCurrent != '\0')
+  ASSERT(NULL != pwzString);
+
+  LPWSTR pwzCurrent = pwzString;
+  LPWSTR pwzStart = NULL;
+  LPWSTR pwzLast = NULL;
+  size_t stQuoteLevel = 0;
+  TCHAR tLastQuote = '\0';
+
+  while (*pwzCurrent != '\0')
+  {
+    if (wcschr(WHITESPACE, *pwzCurrent) == NULL)
     {
-        if (strchr(WHITESPACE, *ptzCurrent) == NULL)
-        {
-            if (ptzStart == NULL)
-            {
-                ptzStart = ptzCurrent;
-            }
-            
-            ptzLast = NULL;
-        }
-        else if (ptzLast == NULL)
-        {
-            ptzLast = ptzCurrent;
-        }
-        
-        if (ptzStart != NULL)
-        {
-            if (*ptzCurrent == '[')
-            {
-                ++stQuoteLevel;
-            }
-            else if (*ptzCurrent == ']')
-            {
-                if (stQuoteLevel > 0)
-                {
-                    --stQuoteLevel;
-                }
-            }
-            else if ((*ptzCurrent == '"') || (*ptzCurrent == '\''))
-            {
-                if (tLastQuote == *ptzCurrent)
-                {
-                    ASSERT(stQuoteLevel > 0);
-                    --stQuoteLevel;
-                    tLastQuote = 0;
-                }
-                else if (!tLastQuote)
-                {
-                    ++stQuoteLevel;
-                    tLastQuote = *ptzCurrent;
-                }
-            }
-            else if (*ptzCurrent == ';')
-            {
-                if (!stQuoteLevel)
-                {
-                    ptzLast = ptzCurrent;
-                    break;
-                }
-            }
-        }
-        
-        ++ptzCurrent;
+      if (pwzStart == NULL)
+      {
+        pwzStart = pwzCurrent;
+      }
+
+      pwzLast = NULL;
     }
-    
-    if (ptzLast != NULL)
+    else if (pwzLast == NULL)
     {
-        while (ptzLast > ptzString && strchr(WHITESPACE, *(ptzLast-1)))
-        {
-            --ptzLast;
-        }
-        
-        *ptzLast = '\0';
+      pwzLast = pwzCurrent;
     }
-    
-    if ((ptzCurrent != ptzString) && ptzStart)
+
+    if (pwzStart != NULL)
     {
-        StringCchCopy(ptzString, strlen(ptzString) + 1, ptzStart);
+      if (*pwzCurrent == '[')
+      {
+        ++stQuoteLevel;
+      }
+      else if (*pwzCurrent == ']')
+      {
+        if (stQuoteLevel > 0)
+        {
+          --stQuoteLevel;
+        }
+      }
+      else if ((*pwzCurrent == '"') || (*pwzCurrent == '\''))
+      {
+        if (tLastQuote == *pwzCurrent)
+        {
+          ASSERT(stQuoteLevel > 0);
+          --stQuoteLevel;
+          tLastQuote = 0;
+        }
+        else if (!tLastQuote)
+        {
+          ++stQuoteLevel;
+          tLastQuote = *pwzCurrent;
+        }
+      }
+      else if (*pwzCurrent == ';')
+      {
+        if (!stQuoteLevel)
+        {
+          pwzLast = pwzCurrent;
+          break;
+        }
+      }
     }
+
+    ++pwzCurrent;
+  }
+
+  if (pwzLast != NULL)
+  {
+    while (pwzLast > pwzString && wcschr(WHITESPACE, *(pwzLast - 1)))
+    {
+      --pwzLast;
+    }
+
+    *pwzLast = '\0';
+  }
+
+  if ((pwzCurrent != pwzString) && pwzStart)
+  {
+    StringCchCopy(pwzString, wcslen(pwzString) + 1, pwzStart);
+  }
 }
+
+
 
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 //
 // _ProcessLine
 //
-void FileParser::_ProcessLine(LPCTSTR ptzName, LPCTSTR ptzValue)
+void FileParser::_ProcessLine(LPCWSTR pwszName, LPCWSTR pwszValue)
 {
-    ASSERT(NULL != m_pSettingsMap);
-    ASSERT(NULL != ptzName); ASSERT(NULL != ptzValue);
-    
-    if (_stricmp(ptzName, "if") == 0)
-    {
-        _ProcessIf(ptzValue);
-    }
+  ASSERT(NULL != m_pSettingsMap);
+  ASSERT(NULL != pwszName);
+  ASSERT(NULL != pwszValue);
+
+  if (_wcsicmp(pwszName, L"if") == 0)
+  {
+    _ProcessIf(pwszValue);
+  }
 #ifdef _DEBUG
-    // In a release build ignore dangling elseif/else/endif.
-    // Too much overhead just for error handling
-    else if (
-           (_stricmp(ptzName, "else") == 0)
-        || (_stricmp(ptzName, "elseif") == 0)
-        || (_stricmp(ptzName, "endif") == 0)
+  // In a release build ignore dangling elseif/else/endif.
+  // Too much overhead just for error handling
+  else if (
+    (_wcsicmp(pwszName, L"else") == 0)
+    || (_wcsicmp(pwszName, L"elseif") == 0)
+    || (_wcsicmp(pwszName, L"endif") == 0)
     )
-    {
-        TRACE("Error: Dangling pre-processor directive (%s, line %d): \"%s\"",
-            m_tzFullPath, m_uLineNumber, ptzName);
-    }
+  {
+    TRACE(L"Error: Dangling pre-processor directive (%s, line %d): \"%s\"",
+      m_wzFullPath, m_uLineNumber, pwszName);
+  }
 #endif
-    else if (_stricmp(ptzName, "include") == 0)
+  else if (_wcsicmp(pwszName, L"include") == 0)
+  {
+    TCHAR tzPath[MAX_PATH_LENGTH] = { 0 };
+
+    if (!GetToken(pwszValue, tzPath, NULL, FALSE))
     {
-        TCHAR tzPath[MAX_PATH_LENGTH] = { 0 };
-        
-        if (!GetToken(ptzValue, tzPath, NULL, FALSE))
-        {
-            TRACE("Syntax Error (%s, %d): Empty \"Include\" directive",
-                m_tzFullPath, m_uLineNumber);
-            return;
-        }
-        
-        TRACE("Include (%s, line %d): \"%s\"",
-            m_tzFullPath, m_uLineNumber, tzPath);
-        
-        FileParser fpParser(m_pSettingsMap);
-        fpParser.ParseFile(tzPath);
+      TRACE(L"Syntax Error (%s, %d): Empty \"Include\" directive",
+        m_wzFullPath, m_uLineNumber);
+      return;
     }
+
+    TRACE(L"Include (%s, line %d): \"%s\"",
+      m_wzFullPath, m_uLineNumber, tzPath);
+
+    FileParser fpParser(m_pSettingsMap);
+    fpParser.ParseFile(tzPath);
+  }
 #ifdef LS_CUSTOM_INCLUDEFOLDER
-    else if (_stricmp(ptzName, _T("includefolder")) == 0)
+  else if (_wcsicmp(ptzName, _T("includefolder")) == 0)
+  {
+    TCHAR tzPath[MAX_PATH_LENGTH]; // path+pattern
+    TCHAR tzFilter[MAX_PATH_LENGTH]; // path only
+
+    // expands string in ptzValue to tzPath - buffer size defined by MAX_PATH_LENGTH
+    VarExpansionEx(tzPath, ptzValue, MAX_PATH_LENGTH);
+
+    PathUnquoteSpaces(tzPath); // strips quotation marks from string
+
+    TRACE(L"Searching IncludeFolder (%s, line %d): \"%s\"",
+      m_wzFullPath, m_uLineNumber, tzPath);
+
+    // Hard-coded filter for *.rc files to limit search operation.
+    //
+    // Create tzFilter as tzPath appended with *.rc
+    //  - the API takes care of trailing slash handling thankfully.
+    PathCombine(tzFilter, tzPath, _T("*.rc"));
+
+    WIN32_FIND_DATA findData; // defining variable for filename
+
+    HANDLE hSearch = FindFirstFile(tzFilter, &findData); // Looking in tzFilter for data :)
+
+    if (INVALID_HANDLE_VALUE != hSearch)
     {
-        TCHAR tzPath[MAX_PATH_LENGTH]; // path+pattern
-        TCHAR tzFilter[MAX_PATH_LENGTH]; // path only
-        
-        // expands string in ptzValue to tzPath - buffer size defined by MAX_PATH_LENGTH
-        VarExpansionEx(tzPath, ptzValue, MAX_PATH_LENGTH);
-        
-        PathUnquoteSpaces(tzPath); // strips quotation marks from string
-        
-        TRACE("Searching IncludeFolder (%s, line %d): \"%s\"",
-            m_tzFullPath, m_uLineNumber, tzPath);
-        
-        // Hard-coded filter for *.rc files to limit search operation.
-        //
-        // Create tzFilter as tzPath appended with *.rc
-        //  - the API takes care of trailing slash handling thankfully.
-        PathCombine(tzFilter, tzPath, _T("*.rc"));
-        
-        WIN32_FIND_DATA findData; // defining variable for filename
-        
-        HANDLE hSearch = FindFirstFile(tzFilter, &findData); // Looking in tzFilter for data :)
-        
-        if (INVALID_HANDLE_VALUE != hSearch)
+      BOOL FoundNextFile;
+
+      do
+      {
+        // stripping out directories, system and hidden files as we're not interested
+        // in them and MS throws these kind of files around from time to time....
+        const DWORD dwAttrib = FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM;
+
+        if (0 == (dwAttrib & findData.dwFileAttributes))
         {
-            BOOL FoundNextFile;
-            
-            do
-            {
-                // stripping out directories, system and hidden files as we're not interested
-                // in them and MS throws these kind of files around from time to time....
-                const DWORD dwAttrib = FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM;
-                
-                if (0 == (dwAttrib & findData.dwFileAttributes))
-                {
-                    // Processing the valid cFileName data now.
-                    TCHAR tzFile[MAX_PATH_LENGTH];
-                    
-                    // adding (like above) filename to tzPath to set tzFile for opening.
-                    if (tzFile == PathCombine(tzFile, tzPath, findData.cFileName))
-                    {
-                        TRACE("Found and including: \"%s\"", tzFile);
-                        
-                        FileParser fpParser(m_pSettingsMap);
-                        fpParser.ParseFile(tzFile);
-                    }
-                }
-                
-                FoundNextFile = FindNextFile(hSearch, &findData);
-            }while (FoundNextFile);
-            
-            FindClose(hSearch);
+          // Processing the valid cFileName data now.
+          TCHAR tzFile[MAX_PATH_LENGTH];
+
+          // adding (like above) filename to tzPath to set tzFile for opening.
+          if (tzFile == PathCombine(tzFile, tzPath, findData.cFileName))
+          {
+            TRACE("Found and including: \"%s\"", tzFile);
+
+            FileParser fpParser(m_pSettingsMap);
+            fpParser.ParseFile(tzFile);
+          }
         }
-        
-        TRACE("Done searching IncludeFolder (%s, line %d): \"%s\"",
-            m_tzFullPath, m_uLineNumber, tzPath);
+
+        FoundNextFile = FindNextFile(hSearch, &findData);
+      } while (FoundNextFile);
+
+      FindClose(hSearch);
     }
+
+    TRACE("Done searching IncludeFolder (%s, line %d): \"%s\"",
+      m_tzFullPath, m_uLineNumber, tzPath);
+  }
 #endif // LS_CUSTOM_INCLUDEFOLDER
-    else
-    {
-        m_pSettingsMap->insert(SettingsMap::value_type(ptzName, ptzValue));
-    }
+  else
+  {
+    m_pSettingsMap->insert(SettingsMap::value_type(pwszName, pwszValue));
+  }
 }
 
 
@@ -370,108 +390,108 @@ void FileParser::_ProcessLine(LPCTSTR ptzName, LPCTSTR ptzValue)
 //
 // _ProcessIf
 //
-void FileParser::_ProcessIf(LPCTSTR ptzExpression)
+void FileParser::_ProcessIf(LPCWSTR pwzExpression)
 {
-    ASSERT(NULL != m_pSettingsMap);
-    ASSERT(NULL != ptzExpression);
-    
-    bool result = false;
-    
-    if (!MathEvaluateBool(*m_pSettingsMap, ptzExpression, result))
+  ASSERT(NULL != m_pSettingsMap);
+  ASSERT(NULL != pwzExpression);
+
+  bool result = false;
+
+  if (!MathEvaluateBool(*m_pSettingsMap, pwzExpression, result))
+  {
+    TRACE(L"Error parsing expression \"%s\" (%s, line %d)",
+      pwzExpression, m_wzFullPath, m_uLineNumber);
+
+    // Invalid syntax, so quit processing entire conditional block
+    _SkipIf();
+    return;
+  }
+
+  TRACE(L"Expression (%s, line %d): \"%s\" evaluated to %s",
+    m_wzFullPath, m_uLineNumber,
+    pwzExpression, result ? "TRUE" : "FALSE");
+
+  wchar_t wzName[MAX_RCCOMMAND] = { 0 };
+  wchar_t wzValue[MAX_LINE_LENGTH] = { 0 };
+
+  if (result)
+  {
+    // When the If expression evaluates true, process lines until we find
+    // an ElseIf. Else, or EndIf
+    while (_ReadLineFromFile(wzName, wzValue))
     {
-        TRACE("Error parsing expression \"%s\" (%s, line %d)",
-            ptzExpression, m_tzFullPath, m_uLineNumber);
-        
-        // Invalid syntax, so quit processing entire conditional block
+      if (_wcsicmp(wzName, L"elseif") == 0 || _wcsicmp(wzName, L"else") == 0)
+      {
+        // After an ElseIf or Else, skip all lines until EndIf
         _SkipIf();
-        return;
+        break;
+      }
+      else if (_wcsicmp(wzName, L"endif") == 0)
+      {
+        // We're done
+        break;
+      }
+      else
+      {
+        // Just a line, so process it
+        _ProcessLine(wzName, wzValue);
+      }
     }
-    
-    TRACE("Expression (%s, line %d): \"%s\" evaluated to %s",
-        m_tzFullPath, m_uLineNumber,
-        ptzExpression, result ? "TRUE" : "FALSE");
-    
-    TCHAR tzName[MAX_RCCOMMAND] = { 0 };
-    TCHAR tzValue[MAX_LINE_LENGTH] = { 0 };
-    
-    if (result)
+  }
+  else
+  {
+    // When the If expression evaluates false, skip lines until we find an
+    // ElseIf, Else, or EndIf
+    while (_ReadLineFromFile(wzName, wzValue))
     {
-        // When the If expression evaluates true, process lines until we find
-        // an ElseIf. Else, or EndIf
-        while (_ReadLineFromFile(tzName, tzValue))
+      if (_wcsicmp(wzName, L"if") == 0)
+      {
+        // Nested Ifs are a special case
+        _SkipIf();
+      }
+      else if (_wcsicmp(wzName, L"elseif") == 0)
+      {
+        // Handle ElseIfs by recursively calling ProcessIf
+        _ProcessIf(wzValue);
+        break;
+      }
+      else if (_wcsicmp(wzName, L"else") == 0)
+      {
+        // Since the If expression was false, when we see Else we
+        // start processing lines until EndIf
+        while (_ReadLineFromFile(wzName, wzValue))
         {
-            if (_stricmp(tzName, "elseif") == 0 || _stricmp(tzName, "else") == 0)
-            {
-                // After an ElseIf or Else, skip all lines until EndIf
-                _SkipIf();
-                break;
-            }
-            else if (_stricmp(tzName, "endif") == 0)
-            {
-                // We're done
-                break;
-            }
-            else
-            {
-                // Just a line, so process it
-                _ProcessLine(tzName, tzValue);
-            }
+          if (_wcsicmp(wzName, L"elseif") == 0)
+          {
+            // Error: ElseIf after Else
+            TRACE(L"Syntax Error (%s, %d): \"ElseIf\" directive after \"Else\"",
+              m_wzFullPath, m_uLineNumber);
+
+            // Invalid syntax, so quit processing conditional block
+            _SkipIf();
+            break;
+          }
+          else if (_wcsicmp(wzName, L"endif") == 0)
+          {
+            // We're done
+            break;
+          }
+          else
+          {
+            // Just a line, so process it
+            _ProcessLine(wzName, wzValue);
+          }
         }
+        // We're done
+        break;
+      }
+      else if (_wcsicmp(wzName, L"endif") == 0)
+      {
+        // We're done
+        break;
+      }
     }
-    else
-    {
-        // When the If expression evaluates false, skip lines until we find an
-        // ElseIf, Else, or EndIf
-        while (_ReadLineFromFile(tzName, tzValue))
-        {
-            if (_stricmp(tzName, "if") == 0)
-            {
-                // Nested Ifs are a special case
-                _SkipIf();
-            }
-            else if (_stricmp(tzName, "elseif") == 0)
-            {
-                // Handle ElseIfs by recursively calling ProcessIf
-                _ProcessIf(tzValue);
-                break;
-            }
-            else if (_stricmp(tzName, "else") == 0)
-            {
-                // Since the If expression was false, when we see Else we
-                // start processing lines until EndIf
-                while (_ReadLineFromFile(tzName, tzValue))
-                {
-                    if (_stricmp(tzName, "elseif") == 0)
-                    {
-                        // Error: ElseIf after Else
-                        TRACE("Syntax Error (%s, %d): \"ElseIf\" directive after \"Else\"",
-                            m_tzFullPath, m_uLineNumber);
-                        
-                        // Invalid syntax, so quit processing conditional block
-                        _SkipIf();
-                        break;
-                    }
-                    else if (_stricmp(tzName, "endif") == 0)
-                    {
-                        // We're done
-                        break;
-                    }
-                    else
-                    {
-                        // Just a line, so process it
-                        _ProcessLine(tzName, tzValue);
-                    }
-                }
-                // We're done
-                break;
-            }
-            else if (_stricmp(tzName, "endif") == 0)
-            {
-                // We're done
-                break;
-            }
-        }
-    }
+  }
 }
 
 
@@ -481,17 +501,17 @@ void FileParser::_ProcessIf(LPCTSTR ptzExpression)
 //
 void FileParser::_SkipIf()
 {
-    TCHAR tzName[MAX_RCCOMMAND];
-    
-    while (_ReadLineFromFile(tzName, NULL))
+  wchar_t wzName[MAX_RCCOMMAND];
+
+  while (_ReadLineFromFile(wzName, NULL))
+  {
+    if (_wcsicmp(wzName, L"if") == 0)
     {
-        if (_stricmp(tzName, "if") == 0)
-        {
-            _SkipIf();
-        }
-        else if (_stricmp(tzName, "endif") == 0)
-        {
-            break;
-        }
+      _SkipIf();
     }
+    else if (_wcsicmp(wzName, L"endif") == 0)
+    {
+      break;
+    }
+  }
 }

@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-*/ 
+*/
 /****************************************************************************
 ****************************************************************************/
 
@@ -28,17 +28,17 @@ const unsigned int GWL_CLASSPOINTER = 0;
 
 struct CreationData
 {
-	SHORT cbExtra;
-	Window* window;
+  SHORT cbExtra;
+  Window* window;
 };
 
 typedef UNALIGNED CreationData UACreationData;
 
 
-const char defaultClassName[] = "AutoWindowClass";
+const wchar_t defaultClassName[] = L"AutoWindowClass";
 
 
-LPCSTR Window::className = defaultClassName;
+LPCWSTR Window::className = defaultClassName;
 WNDCLASSEX Window::windowClass;
 DWORD Window::instanceCount = 0;
 HINSTANCE Window::hInstance = 0;
@@ -47,53 +47,54 @@ HINSTANCE Window::hInstance = 0;
 //---------------------------------------------------------
 // Constructor
 //---------------------------------------------------------
-Window::Window(LPCSTR szClassName):
-		hWnd(NULL),
-		hParent(NULL)
+Window::Window(LPCWSTR wszClassName) :
+  hWnd(NULL),
+  hParent(NULL)
 {
-	WNDCLASSEX & wc = windowClass;
+  WNDCLASSEX& wc = windowClass;
 
-	if (!hInstance)
-		MessageBox(NULL, "ERROR: Please call Window::init()", szClassName,
-		           MB_ICONINFORMATION | MB_TOPMOST);
+  if (!hInstance)
+    MessageBox(NULL, L"ERROR: Please call Window::init()", wszClassName,
+      MB_ICONINFORMATION | MB_TOPMOST);
 
-	instanceCount++;
-	if (instanceCount > 1)
-		return ;
+  instanceCount++;
+  if (instanceCount > 1)
+    return;
 
-	if (className != defaultClassName)
-	{
-		delete[] const_cast<LPSTR>(className);
-		className = defaultClassName;
-	}
 
-	if (szClassName)
-	{
-		className = new char[strlen(szClassName) + 1];
-		strcpy((LPSTR)className, szClassName);
-	}
+  if (className != defaultClassName)
+  {
+    delete[] const_cast<LPWSTR>(className);
+    className = defaultClassName;
+  }
 
-	memset(&wc, 0, sizeof(WNDCLASSEX));
-	wc.cbSize = sizeof(WNDCLASSEX);
-	wc.cbWndExtra = sizeof(Window*);
-	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-	wc.lpfnWndProc = Window::wndProc;
-	wc.hInstance = hInstance;
-	wc.lpszClassName = className;
+  if (wszClassName)
+  {
+    size_t len = wcslen(wszClassName) + 1;
+    wcscpy_s((LPWSTR)className, len, wszClassName);
+  }
 
-	if (!RegisterClassEx(&wc))
-	{
-		// Class could not be registered, try to re-register
-		UnregisterClass(className, hInstance);
+  memset(&wc, 0, sizeof(WNDCLASSEX));
+  wc.cbSize = sizeof(WNDCLASSEX);
+  wc.cbWndExtra = sizeof(Window*);
+  wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+  wc.lpfnWndProc = Window::wndProc;
+  wc.hInstance = hInstance;
+  wc.lpszClassName = className;
 
-		if (!RegisterClassEx(&wc))
-		{
-			// Still no luck, error out
-			MessageBox(NULL, "Unable to register window class.", className,
-			           MB_ICONEXCLAMATION | MB_TOPMOST);
-			throw;
-		}
-	}
+  if (!RegisterClassEx(&wc))
+  {
+    // Class could not be registered, try to re-register
+    UnregisterClass(className, hInstance);
+
+    if (!RegisterClassEx(&wc))
+    {
+      // Still no luck, error out
+      MessageBox(NULL, L"Unable to register window class.", className,
+        MB_ICONEXCLAMATION | MB_TOPMOST);
+      throw;
+    }
+  }
 }
 
 
@@ -102,15 +103,15 @@ Window::Window(LPCSTR szClassName):
 //---------------------------------------------------------
 Window::~Window()
 {
-	destroyWindow();
-	if (instanceCount > 0)
-		instanceCount--;
-	if (instanceCount > 0)
-		return ;
+  destroyWindow();
+  if (instanceCount > 0)
+    instanceCount--;
+  if (instanceCount > 0)
+    return;
 
-	UnregisterClass(className, hInstance);
-	if (className != defaultClassName)
-		delete[] const_cast<LPSTR>(className);
+  UnregisterClass(className, hInstance);
+  if (className != defaultClassName)
+    delete[] const_cast<LPWSTR>(className);
 }
 
 
@@ -119,33 +120,33 @@ Window::~Window()
 //---------------------------------------------------------
 const HWND Window::handle() const
 {
-	return hWnd;
+  return hWnd;
 }
 
 
 //---------------------------------------------------------
 // Creates a new window and links it with the class
 //---------------------------------------------------------
-bool Window::createWindow(DWORD dwExStyle, LPCSTR lpWindowName, DWORD dwStyle,
-                          int x, int y, int nWidth, int nHeight, HWND hWndParent)
+bool Window::createWindow(DWORD dwExStyle, LPCWSTR lpWindowName, DWORD dwStyle,
+  int x, int y, int nWidth, int nHeight, HWND hWndParent)
 {
-	UACreationData creationData = {sizeof(UACreationData), this};
+  UACreationData creationData = { sizeof(UACreationData), this };
 
-	if (hWnd && !destroyWindow())
-	{
-		MessageBox(NULL, "Unable to destroy existing window.", className,
-		           MB_ICONEXCLAMATION | MB_TOPMOST);
-		throw;
-	}
+  if (hWnd && !destroyWindow())
+  {
+    MessageBox(NULL, L"Unable to destroy existing window.", className,
+      MB_ICONEXCLAMATION | MB_TOPMOST);
+    throw;
+  }
 
-	hParent = hWndParent;
+  hParent = hWndParent;
 
-	hWnd = CreateWindowEx(dwExStyle, className, lpWindowName, dwStyle,
-	                                        x, y, nWidth, nHeight, hParent, NULL, hInstance, &creationData);
-	if (!hWnd)
-		return false;
+  hWnd = CreateWindowEx(dwExStyle, className, lpWindowName, dwStyle,
+    x, y, nWidth, nHeight, hParent, NULL, hInstance, &creationData);
+  if (!hWnd)
+    return false;
 
-	return true;
+  return true;
 }
 
 
@@ -155,9 +156,9 @@ bool Window::createWindow(DWORD dwExStyle, LPCSTR lpWindowName, DWORD dwStyle,
 //---------------------------------------------------------
 bool Window::destroyWindow()
 {
-	if (hWnd && DestroyWindow(hWnd))
-		return true;
-	return false;
+  if (hWnd && DestroyWindow(hWnd))
+    return true;
+  return false;
 }
 
 
@@ -167,36 +168,38 @@ bool Window::destroyWindow()
 //---------------------------------------------------------
 LRESULT CALLBACK Window::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	Message message = { 0 };
-	message.uMsg = uMsg;
-	message.wParam = wParam;
-	message.lParam = lParam;
-	
-	Window* window = NULL;
+  Message message = { 0 };
+  message.uMsg = uMsg;
+  message.wParam = wParam;
+  message.lParam = lParam;
 
-	if (uMsg == WM_CREATE)
-	{
-		LPVOID & lpCreateParams = LPCREATESTRUCT(lParam)->lpCreateParams;
+  Window* window = NULL;
 
-		if (lpCreateParams)
-		{
-			window = ((UACreationData*)(lpCreateParams))->window;
-			SetWindowLong(hWnd, GWL_CLASSPOINTER, (LONG)window);
-		}
-	}
-	else
-		window = (Window*)(GetWindowLong(hWnd, GWL_CLASSPOINTER));
+  if (uMsg == WM_CREATE)
+  {
+    LPVOID& lpCreateParams = LPCREATESTRUCT(lParam)->lpCreateParams;
 
-	if (window)
-	{
-		if (uMsg == WM_CREATE)
-			window->hWnd = hWnd;
-		window->windowProc(message);
-		if (uMsg == WM_NCDESTROY)
-			window->hWnd = NULL;
-		return message.lResult;
-	}
-	return DefWindowProc(hWnd, uMsg, wParam, lParam);
+    if (lpCreateParams)
+    {
+      window = ((UACreationData*)(lpCreateParams))->window;
+      SetWindowLongPtr(hWnd, GWL_CLASSPOINTER, (LONG_PTR)window);
+    }
+  }
+  else
+    window = (Window*)(GetWindowLongPtr(hWnd, GWL_CLASSPOINTER));
+
+  if (window)
+  {
+    if (uMsg == WM_CREATE) {
+      window->hWnd = hWnd;
+    }
+    window->windowProc(message);
+    if (uMsg == WM_NCDESTROY) {
+      window->hWnd = NULL;
+    }
+    return message.lResult;
+  }
+  return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
 
@@ -205,16 +208,16 @@ LRESULT CALLBACK Window::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 //---------------------------------------------------------
 void Window::windowProc(Message& message)
 {
-	message.lResult = DefWindowProc(hWnd, message.uMsg, message.wParam, message.lParam);
+  message.lResult = DefWindowProc(hWnd, message.uMsg, message.wParam, message.lParam);
 }
 
 
 void Window::init(HINSTANCE hInst)
 {
-	hInstance = hInst;
+  hInstance = hInst;
 }
 
 HINSTANCE Window::instance()
 {
-	return hInstance;
+  return hInstance;
 }

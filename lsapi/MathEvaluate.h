@@ -1,6 +1,7 @@
 /*
 This is a part of the LiteStep Shell Source code.
 
+Copyright (C) 2025 The x7 Dev Team
 Copyright (C) 2006 The LiteStep Development Team
 
 This program is free software; you can redistribute it and/or
@@ -47,7 +48,7 @@ enum
  *         <code>false</code> if an error occured
  */
 bool MathEvaluateBool(const SettingsMap& context,
-    const std::string& expression,
+    const std::wstring& expression,
     bool& result,
     unsigned int flags = 0);
 
@@ -63,8 +64,8 @@ bool MathEvaluateBool(const SettingsMap& context,
  *         <code>false</code> if an error occured
  */
 bool MathEvaluateString(const SettingsMap& context,
-    const std::string& expression,
-    std::string& result,
+    const std::wstring& expression,
+    std::wstring& result,
     const StringSet& recursiveVarSet,
     unsigned int flags = 0);
 

@@ -16,51 +16,60 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-*/ 
+*/
 /****************************************************************************
 ****************************************************************************/
 #include <png.h>
 #include "png_support.h"
 #include "../utility/safeptr.h"
+#include "../utility/common.h"
 
 
 typedef struct _PNGERROR
 {
-    HWND Wnd;
-    jmp_buf ErrorJump;
+  HWND Wnd;
+  jmp_buf ErrorJump;
 }
-PNGERROR, *PPNGERROR;
+PNGERROR, * PPNGERROR;
 
+//void PNGErrorHandler(png_structp PngStruct, wchar_t* Message)
 void PNGErrorHandler(png_structp PngStruct, png_const_charp Message)
 {
-	PPNGERROR PngError = reinterpret_cast<PPNGERROR>(png_get_error_ptr(PngStruct));
+  PPNGERROR PngError = reinterpret_cast<PPNGERROR>(png_get_error_ptr(PngStruct));
 
-	if (!PngError)
-		throw Message;
-	else
-	{
-		MessageBox(PngError->Wnd, Message, "LiteStep::LoadFromPNG:PngError", MB_OK | MB_ICONERROR);
-		longjmp(PngError->ErrorJump, 1);
-	}
+  if (!PngError)
+    throw Message;
+  else
+  {
+    MessageBox(PngError->Wnd, ConvertStringToWstring(Message).c_str(), L"LiteStep::LoadFromPNG:PngError", MB_OK | MB_ICONERROR);
+    longjmp(PngError->ErrorJump, 1);
+  }
 }
+
 
 
 png_voidp ls_png_malloc(png_structp /* png_ptr */, png_size_t size)
 {
-    return malloc(size);
+  return malloc(size);
 }
+
+
+
 
 void ls_png_free(png_structp /* png_ptr */, png_voidp ptr)
 {
-    free(ptr);
+  free(ptr);
 }
+
+
+
 
 void ls_png_read_data(png_structp png_ptr, png_bytep data, png_size_t length)
 {
-    FILE* file = (FILE*)png_get_io_ptr(png_ptr);
-    ASSERT(file); // if libpng calls this function, this mustn't be empty
+  FILE* file = (FILE*)png_get_io_ptr(png_ptr);
+  ASSERT(file); // if libpng calls this function, this mustn't be empty
 
-    fread(data, 1, length, file);
+  fread(data, 1, length, file);
 }
 
 
@@ -70,125 +79,135 @@ void ls_png_read_data(png_structp png_ptr, png_bytep data, png_size_t length)
 // passing a FILE* into libpng, isn't reliable because it crashes if libpng was
 // compiled with a different CRT than lsapi.dll
 //
-HBITMAP LoadFromPNG(LPCSTR pszFilename)
+HBITMAP LoadFromPNG(LPCWSTR pwszFilename)
 {
-	HBITMAP hDibSection = NULL;
+  HBITMAP hDibSection = NULL;
 
-	if (IsValidStringPtr(pszFilename))
-	{
-		FILE * hFile = fopen(pszFilename, "rb");
-		if (hFile)
-		{
-            const size_t num_sig_bytes = 8;
-			unsigned char sig[num_sig_bytes];
-			fread(sig, 1, num_sig_bytes, hFile);
+  if (IsValidStringPtr(pwszFilename))
+  {
+    FILE* hFile; // Note: No initialization here
+    //FILE * hFile = _wfopen(pwszFilename, L"rb");
+    errno_t err = _wfopen_s(&hFile, pwszFilename, L"rb"); // Use _wfopen_s
 
-			int is_png = png_check_sig(sig, num_sig_bytes);
-			if (is_png)
-			{
-				PNGERROR PngError = { GetForegroundWindow() };
+    if (err == 0) 
+    { // Check for errors!
 
-				png_structp Read = png_create_read_struct_2(PNG_LIBPNG_VER_STRING,
-                    &PngError, PNGErrorHandler, NULL,
-                    NULL, ls_png_malloc, ls_png_free);
+      // File opened successfully. Use hFile.
+      // ... your code to read from the file ...
+      const size_t num_sig_bytes = 8;
+      unsigned char sig[num_sig_bytes];
+      fread(sig, 1, num_sig_bytes, hFile);
 
-				if (Read)
-				{
-                    png_infop Info = png_create_info_struct(Read);
-					if (Info)
-					{
-						if (!setjmp(PngError.ErrorJump))
-						{
-                            png_set_read_fn(Read, hFile, ls_png_read_data);
-							png_set_sig_bytes(Read, num_sig_bytes);
-							png_read_info(Read, Info);
+      int is_png = png_check_sig(sig, num_sig_bytes);
+      if (is_png)
+      {
+        PNGERROR PngError = { GetForegroundWindow() };
 
-							const unsigned char bit_depth = png_get_bit_depth(Read, Info);
-							const unsigned char color_type = png_get_color_type(Read, Info);
+        png_structp Read = png_create_read_struct_2(PNG_LIBPNG_VER_STRING,
+          &PngError, PNGErrorHandler, NULL,
+          NULL, ls_png_malloc, ls_png_free);
 
-							if (color_type == PNG_COLOR_TYPE_PALETTE)
-							{
-								png_set_palette_to_rgb(Read);
-							}
+        if (Read)
+        {
+          png_infop Info = png_create_info_struct(Read);
+          if (Info)
+          {
+            if (!setjmp(PngError.ErrorJump))
+            {
+              png_set_read_fn(Read, hFile, ls_png_read_data);
+              png_set_sig_bytes(Read, num_sig_bytes);
+              png_read_info(Read, Info);
 
-							if ((color_type == PNG_COLOR_TYPE_GRAY) || (color_type == PNG_COLOR_TYPE_GRAY_ALPHA))
-							{
-								if (bit_depth < 8)
-								{
-									png_set_gray_1_2_4_to_8(Read);
-								}
-								png_set_gray_to_rgb(Read);
-							}
+              const unsigned char bit_depth = png_get_bit_depth(Read, Info);
+              const unsigned char color_type = png_get_color_type(Read, Info);
 
-							if (png_get_valid(Read, Info, PNG_INFO_tRNS))
-							{
-								png_set_tRNS_to_alpha(Read);
-							}
+              if (color_type == PNG_COLOR_TYPE_PALETTE)
+              {
+                png_set_palette_to_rgb(Read);
+              }
 
-							if (color_type & PNG_COLOR_MASK_COLOR)
-							{
-								png_set_bgr(Read);
-							}
+              if ((color_type == PNG_COLOR_TYPE_GRAY) || (color_type == PNG_COLOR_TYPE_GRAY_ALPHA))
+              {
+                if (bit_depth < 8)
+                {
+                  //png_set_gray_1_2_4_to_8(Read);
+                  png_set_expand_gray_1_2_4_to_8(Read);
+                }
+                png_set_gray_to_rgb(Read);
+              }
 
-							if (bit_depth == 16)
-							{
-								png_set_strip_16(Read);
-							}
+              if (png_get_valid(Read, Info, PNG_INFO_tRNS))
+              {
+                png_set_tRNS_to_alpha(Read);
+              }
 
-							double image_gamma = 1 / 2.2;
-							png_get_gAMA(Read, Info, &image_gamma);
-							png_set_gamma(Read, 2.2, image_gamma);
+              if (color_type & PNG_COLOR_MASK_COLOR)
+              {
+                png_set_bgr(Read);
+              }
 
-							const int num_passes = png_set_interlace_handling(Read);
+              if (bit_depth == 16)
+              {
+                png_set_strip_16(Read);
+              }
 
-							png_read_update_info(Read, Info);
+              double image_gamma = 1 / 2.2;
+              png_get_gAMA(Read, Info, &image_gamma);
+              png_set_gamma(Read, 2.2, image_gamma);
 
-							BITMAPINFO bmi = {0};
-							bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-							bmi.bmiHeader.biWidth = (LONG)png_get_image_width(Read, Info);
-							bmi.bmiHeader.biHeight = -(LONG)png_get_image_height(Read, Info);
-							bmi.bmiHeader.biBitCount = (WORD)(png_get_channels(Read, Info) * png_get_bit_depth(Read, Info));
-							bmi.bmiHeader.biPlanes = 1;
-							bmi.bmiHeader.biCompression = BI_RGB;
+              const int num_passes = png_set_interlace_handling(Read);
 
-							unsigned char* Bits;
-							hDibSection = CreateDIBSection(NULL, &bmi, 0, reinterpret_cast<LPVOID*>(&Bits), NULL, 0);
-							if (!Bits)
-							{
-								longjmp(PngError.ErrorJump, 1);
-							}
+              png_read_update_info(Read, Info);
 
-							unsigned int dib_bytes_per_scanline = (((bmi.bmiHeader.biWidth * bmi.bmiHeader.biBitCount) + 31) & ~31) >> 3;
+              BITMAPINFO bmi = { 0 };
+              bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+              bmi.bmiHeader.biWidth = (LONG)png_get_image_width(Read, Info);
+              bmi.bmiHeader.biHeight = -(LONG)png_get_image_height(Read, Info);
+              bmi.bmiHeader.biBitCount = (WORD)(png_get_channels(Read, Info) * png_get_bit_depth(Read, Info));
+              bmi.bmiHeader.biPlanes = 1;
+              bmi.bmiHeader.biCompression = BI_RGB;
 
-							for (int Pass = 0; Pass < num_passes; Pass++)
-							{
-								for (int y = 0; y < -bmi.bmiHeader.biHeight; y++)
-								{
-									unsigned char* Scanline = reinterpret_cast<unsigned char*>(Bits + (y * dib_bytes_per_scanline));
-									png_read_row(Read, Scanline, NULL);
-								}
-							}
+              unsigned char* Bits;
+              hDibSection = CreateDIBSection(NULL, &bmi, 0, reinterpret_cast<LPVOID*>(&Bits), NULL, 0);
+              if (!Bits)
+              {
+                longjmp(PngError.ErrorJump, 1);
+              }
 
-							png_read_end(Read, Info);
+              unsigned int dib_bytes_per_scanline = (((bmi.bmiHeader.biWidth * bmi.bmiHeader.biBitCount) + 31) & ~31) >> 3;
 
-							png_destroy_read_struct(&Read, &Info, NULL);
-						}
-						else
-						{
-							png_destroy_read_struct(&Read, &Info, NULL);
-						}
-					}
-					else
-					{
-						png_destroy_read_struct(&Read, NULL, NULL);
-					}
-				}
-			}
+              for (int Pass = 0; Pass < num_passes; Pass++)
+              {
+                for (int y = 0; y < -bmi.bmiHeader.biHeight; y++)
+                {
+                  unsigned char* Scanline = reinterpret_cast<unsigned char*>(Bits + (y * dib_bytes_per_scanline));
+                  png_read_row(Read, Scanline, NULL);
+                }
+              }
 
-			fclose(hFile);
-		}
+              png_read_end(Read, Info);
 
-	}
+              png_destroy_read_struct(&Read, &Info, NULL);
+            }
+            else
+            {
+              png_destroy_read_struct(&Read, &Info, NULL);
+            }
+          }
+          else
+          {
+            png_destroy_read_struct(&Read, NULL, NULL);
+          }
+        }
+      }
 
-	return hDibSection;
+      fclose(hFile);
+    } else {
+      // Handle the error.  err will contain the error code.
+      //fwprintf(stderr, L"Error opening file: %s\n", pwszFilename); // Example error message
+      // ... other error handling ...
+    }
+  }
+
+  return hDibSection;
 }

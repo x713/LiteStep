@@ -1,6 +1,7 @@
 /*
 This is a part of the LiteStep Shell Source code.
 
+Copyright (C) 2025 The x7 Dev Team
 Copyright (C) 1997-2003,2005 The LiteStep Development Team
 
 This program is free software; you can redistribute it and/or
@@ -21,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 ****************************************************************************/
 #include "shellhlp.h"
 #include "core.hpp"
+#include "windows.h"
 
 //
 // GetShellFolderPath
@@ -31,10 +33,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // the returned path is to append another string to it, which doesn't work with
 // quotes.
 //
-bool GetShellFolderPath(int nFolder, LPTSTR ptzPath, size_t cchPath)
+bool GetShellFolderPath(int nFolder, LPWSTR pwzPath, size_t cchPath)
 {
     ASSERT(cchPath >= MAX_PATH);
-    ASSERT_ISVALIDBUF(ptzPath, cchPath);
+    ASSERT_ISVALIDBUF(pwzPath, cchPath);
     UNREFERENCED_PARAMETER(cchPath);
 
     IMalloc* pMalloc;
@@ -48,7 +50,7 @@ bool GetShellFolderPath(int nFolder, LPTSTR ptzPath, size_t cchPath)
 
         if (SUCCEEDED(SHGetSpecialFolderLocation(NULL, nFolder, &pidl)))
         {
-            bReturn = SHGetPathFromIDList(pidl, ptzPath) ? true : false;
+            bReturn = SHGetPathFromIDList(pidl, pwzPath) ? true : false;
             
             pMalloc->Free(pidl);
         }
@@ -70,45 +72,45 @@ bool GetShellFolderPath(int nFolder, LPTSTR ptzPath, size_t cchPath)
 //                 E_OUTOFMEMORY - buffer too small
 //                 E_FAIL        - other failure (invalid input string)
 //
-HRESULT PathAddBackslashEx(LPTSTR ptzPath, size_t cchPath)
+HRESULT PathAddBackslashEx(LPWSTR pwzPath, size_t cchPath)
 {
     ASSERT(cchPath <= STRSAFE_MAX_CCH);
-    ASSERT_ISVALIDBUF(ptzPath, cchPath);
+    ASSERT_ISVALIDBUF(pwzPath, cchPath);
 
     HRESULT hr = E_FAIL;
     size_t cchCurrentLength = 0;
 
-    if (SUCCEEDED(StringCchLength(ptzPath, cchPath, &cchCurrentLength)))
+    if (SUCCEEDED(StringCchLength(pwzPath, cchPath, &cchCurrentLength)))
     {
         bool bHasQuote = false;
-        LPTSTR ptzEnd = ptzPath + cchCurrentLength;
+        LPWSTR pwzEnd = pwzPath + cchCurrentLength;
         
-        if ((ptzEnd > ptzPath) && (*(ptzEnd-1) == _T('\"')))
+        if ((pwzEnd > pwzPath) && (*(pwzEnd-1) == '\"'))
         {
-            --ptzEnd;
+            --pwzEnd;
             bHasQuote = true;
         }
 
-        if (ptzEnd > ptzPath)
+        if (pwzEnd > pwzPath)
         {
-            if (*(ptzEnd-1) != _T('\\'))
+            if (*(pwzEnd-1) != '\\')
             {
                 if (cchPath - cchCurrentLength > 1)
                 {
                     if (bHasQuote)
                     {
-                        *(ptzEnd+1) = *ptzEnd;
+                        *(pwzEnd+1) = *pwzEnd;
                     }
                     
-                    *ptzEnd = _T('\\');
+                    *pwzEnd = '\\';
                     
                     if (bHasQuote)
                     {
-                        ++ptzEnd;
+                        ++pwzEnd;
                     }
                     
-                    ASSERT((ptzEnd - ptzPath) < cchPath);
-                    *(ptzEnd+1) = _T('\0');
+                    ASSERT(static_cast<long long>(pwzEnd - pwzPath) < static_cast<long long>(cchPath));
+                    *(pwzEnd+1) = '\0';
                     
                     hr = S_OK;
                 }
@@ -131,9 +133,9 @@ HRESULT PathAddBackslashEx(LPTSTR ptzPath, size_t cchPath)
 //
 // GetSystemString
 //
-bool GetSystemString(DWORD dwCode, LPTSTR ptzBuffer, size_t cchBuffer)
+bool GetSystemString(DWORD dwCode, LPWSTR pwzBuffer, size_t cchBuffer)
 {
-    ASSERT_ISVALIDBUF(ptzBuffer, cchBuffer);
+    ASSERT_ISVALIDBUF(pwzBuffer, cchBuffer);
 
     return (0 != FormatMessage(
         FORMAT_MESSAGE_FROM_SYSTEM |
@@ -141,8 +143,8 @@ bool GetSystemString(DWORD dwCode, LPTSTR ptzBuffer, size_t cchBuffer)
         NULL,
         dwCode,
         0,
-        ptzBuffer,
-        cchBuffer,
+        pwzBuffer,
+        static_cast<DWORD>(cchBuffer),
         NULL
         ));
 }
@@ -155,11 +157,11 @@ bool GetSystemString(DWORD dwCode, LPTSTR ptzBuffer, size_t cchBuffer)
 // people are interested in the number of bytes written we could add another
 // parameter (DWORD* pcchWritten)
 //
-bool LSGetModuleFileName(HINSTANCE hInst, LPTSTR pszBuffer, DWORD cchBuffer)
+bool LSGetModuleFileName(HINSTANCE hInst, LPWSTR pwszBuffer, DWORD cchBuffer)
 {
     bool bSuccess = false;
 
-    DWORD cchCopied = GetModuleFileName(hInst, pszBuffer, cchBuffer);
+    DWORD cchCopied = GetModuleFileName(hInst, pwszBuffer, cchBuffer);
 
     if (cchCopied == cchBuffer)
     {
@@ -168,7 +170,7 @@ bool LSGetModuleFileName(HINSTANCE hInst, LPTSTR pszBuffer, DWORD cchBuffer)
         // GetModuleFileName doesn't null-terminate the buffer if it is too
         // small. Make sure that even in this error case the buffer is properly
         // terminated - some people don't check return values.
-        pszBuffer[cchBuffer-1] = '\0';
+        pwszBuffer[cchBuffer-1] = '\0';
     }
     else if (cchCopied > 0 && cchCopied < cchBuffer)
     {
@@ -179,10 +181,6 @@ bool LSGetModuleFileName(HINSTANCE hInst, LPTSTR pszBuffer, DWORD cchBuffer)
 }
 
 
-//
-// TryAllowSetForegroundWindow
-// Calls AllowSetForegroundWindow on platforms that support it
-//
 HRESULT TryAllowSetForegroundWindow(HWND hWnd)
 {
     ASSERT(hWnd != NULL);
@@ -190,8 +188,13 @@ HRESULT TryAllowSetForegroundWindow(HWND hWnd)
 
     typedef BOOL (WINAPI* ASFWPROC)(DWORD);
 
-    ASFWPROC pAllowSetForegroundWindow = (ASFWPROC)GetProcAddress(
-        GetModuleHandle(_T("user32.dll")), "AllowSetForegroundWindow");
+    HMODULE hUser32 = GetModuleHandle(L"user32.dll");
+    if (hUser32 == NULL)
+    {
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+
+    ASFWPROC pAllowSetForegroundWindow = (ASFWPROC)GetProcAddress(hUser32, "AllowSetForegroundWindow");
 
     if (pAllowSetForegroundWindow)
     {

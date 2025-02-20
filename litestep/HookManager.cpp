@@ -60,7 +60,7 @@ bool StartHookManager(HINSTANCE hInstance)
 		if(!loadHookModule())
 		{
 			RESOURCE_MSGBOX(g_hInstance, IDS_HOOKMGR_LOADHOOK_ERROR,
-				"Could not load hook.dll", HOOKMGRWINDOWNAME);
+				L"Could not load hook.dll", HOOKMGRWINDOWNAME);
 
 			g_hInstance = NULL;
 
@@ -73,7 +73,7 @@ bool StartHookManager(HINSTANCE hInstance)
 		if (!createHookThread())
 		{
 			RESOURCE_MSGBOX(g_hInstance, IDS_HOOKMGR_CREATETHREAD_ERROR,
-				"Could not create HookManager Thread", HOOKMGRWINDOWNAME);
+				L"Could not create HookManager Thread", HOOKMGRWINDOWNAME);
 
 			FreeLibrary(g_hmodHook);
 			g_hmodHook = NULL;
@@ -178,7 +178,7 @@ static bool createHookThread()
 
 static bool loadHookModule()
 {
-	g_hmodHook = LoadLibrary("hook");
+	g_hmodHook = LoadLibrary(L"hook");
 
 	if (NULL != g_hmodHook)
 	{
@@ -208,7 +208,7 @@ static DWORD WINAPI hookMgrMain(LPVOID lpParameter)
 	{
 
 		RESOURCE_MSGBOX(g_hInstance, IDS_LITESTEP_CREATEWINDOW_ERROR,
-			"Unable to create window.", HOOKMGRWINDOWNAME);
+			L"Unable to create window.", HOOKMGRWINDOWNAME);
 		return 1;
 	}
 

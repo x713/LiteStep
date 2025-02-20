@@ -1,6 +1,7 @@
 /*
 This is a part of the LiteStep Shell Source code.
 
+Copyright (C) 2025 The x7 Dev Team
 Copyright (C) 1997-2002 The LiteStep Development Team
 
 This program is free software; you can redistribute it and/or
@@ -29,19 +30,19 @@ public:
 	FileParser(SettingsMap* pSettingsMap);
 	~FileParser();
 
-	void ParseFile(LPCTSTR ptzFileName);
+	void ParseFile(LPCWSTR pwzFileName);
 
 private:
 	SettingsMap* m_pSettingsMap;
 	FILE* m_phFile;
 
 	unsigned int m_uLineNumber;
-	TCHAR m_tzFullPath[MAX_PATH_LENGTH];
+	wchar_t m_wzFullPath[MAX_PATH_LENGTH] {0};
 
-	bool _ReadLineFromFile(LPTSTR ptzName, LPTSTR ptzValue);
-	void _StripString(LPTSTR ptzString);
-	void _ProcessLine(LPCTSTR ptzName, LPCTSTR ptzValue);
-	void _ProcessIf(LPCTSTR ptzExpression);
+	bool _ReadLineFromFile(LPWSTR pwzName, LPWSTR pwzValue);
+	void _StripString(LPWSTR pwzString);
+	void _ProcessLine(LPCWSTR pwzName, LPCWSTR pwzValue);
+	void _ProcessIf(LPCWSTR pwzExpression);
 	void _SkipIf();
 
 };

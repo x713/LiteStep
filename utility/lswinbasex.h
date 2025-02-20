@@ -41,7 +41,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 class WindowX: public Window
 {
 public:
-	WindowX(LPCSTR className);
+	WindowX(LPCWSTR className);
 	virtual ~WindowX();
 
 protected:
@@ -51,7 +51,7 @@ protected:
 	void onGetRevId(Message& message);
 	void onTop(bool bSetAlwaysOnTop);
 
-	virtual LPCSTR Revision() = 0;
+	virtual LPCWSTR Revision() = 0;
 
 	// Attributes
 
@@ -94,13 +94,13 @@ protected:
 
 	// Window Text Functions
 
-	BOOL SetWindowText(LPCSTR lpszString)
+	BOOL SetWindowText(LPCWSTR lpszString)
 	{
 		ASSERT(::IsWindow(hWnd));
 		return ::SetWindowText(hWnd, lpszString);
 	}
 
-	int GetWindowText(LPSTR lpszStringBuf, int nMaxCount) const
+	int GetWindowText(LPWSTR lpszStringBuf, int nMaxCount) const
 	{
 		ASSERT(::IsWindow(hWnd));
 		return ::GetWindowText(hWnd, lpszStringBuf, nMaxCount);
@@ -468,25 +468,25 @@ protected:
 		return ::CheckRadioButton(hWnd, nIDFirstButton, nIDLastButton, nIDCheckButton);
 	}
 
-	int DlgDirList(LPSTR lpPathSpec, int nIDListBox, int nIDStaticPath, UINT nFileType)
+	int DlgDirList(LPWSTR lpPathSpec, int nIDListBox, int nIDStaticPath, UINT nFileType)
 	{
 		ASSERT(::IsWindow(hWnd));
 		return ::DlgDirList(hWnd, lpPathSpec, nIDListBox, nIDStaticPath, nFileType);
 	}
 
-	int DlgDirListComboBox(LPSTR lpPathSpec, int nIDComboBox, int nIDStaticPath, UINT nFileType)
+	int DlgDirListComboBox(LPWSTR lpPathSpec, int nIDComboBox, int nIDStaticPath, UINT nFileType)
 	{
 		ASSERT(::IsWindow(hWnd));
 		return ::DlgDirListComboBox(hWnd, lpPathSpec, nIDComboBox, nIDStaticPath, nFileType);
 	}
 
-	BOOL DlgDirSelect(LPSTR lpString, int nCount, int nIDListBox)
+	BOOL DlgDirSelect(LPWSTR lpString, int nCount, int nIDListBox)
 	{
 		ASSERT(::IsWindow(hWnd));
 		return ::DlgDirSelectEx(hWnd, lpString, nCount, nIDListBox);
 	}
 
-	BOOL DlgDirSelectComboBox(LPSTR lpString, int nCount, int nIDComboBox)
+	BOOL DlgDirSelectComboBox(LPWSTR lpString, int nCount, int nIDComboBox)
 	{
 		ASSERT(::IsWindow(hWnd));
 		return ::DlgDirSelectComboBoxEx(hWnd, lpString, nCount, nIDComboBox);
@@ -498,7 +498,7 @@ protected:
 		return ::GetDlgItemInt(hWnd, nID, lpTrans, bSigned);
 	}
 
-	UINT GetDlgItemText(int nID, LPSTR lpStr, int nMaxCount) const
+	UINT GetDlgItemText(int nID, LPWSTR lpStr, int nMaxCount) const
 	{
 		ASSERT(::IsWindow(hWnd));
 		return ::GetDlgItemText(hWnd, nID, lpStr, nMaxCount);
@@ -534,7 +534,7 @@ protected:
 		return ::SetDlgItemInt(hWnd, nID, nValue, bSigned);
 	}
 
-	BOOL SetDlgItemText(int nID, LPCSTR lpszString)
+	BOOL SetDlgItemText(int nID, LPCWSTR lpszString)
 	{
 		ASSERT(::IsWindow(hWnd));
 		return ::SetDlgItemText(hWnd, nID, lpszString);
@@ -674,7 +674,7 @@ protected:
 		return ::FlashWindow(hWnd, bInvert);
 	}
 
-	int MessageBox(LPCSTR lpszText, LPCSTR lpszCaption = "", UINT nType = MB_OK)
+	int MessageBox(LPCWSTR lpszText, LPCWSTR lpszCaption = L"", UINT nType = MB_OK)
 	{
 		ASSERT(::IsWindow(hWnd));
 		return ::MessageBox(hWnd, lpszText, lpszCaption, nType);
@@ -757,7 +757,7 @@ protected:
 
 	// Help Functions
 
-	BOOL WinHelp(LPCSTR lpszHelp, UINT nCmd = HELP_CONTEXT, DWORD dwData = 0)
+	BOOL WinHelp(LPCWSTR lpszHelp, UINT nCmd = HELP_CONTEXT, DWORD dwData = 0)
 	{
 		ASSERT(::IsWindow(hWnd));
 		return ::WinHelp(hWnd, lpszHelp, nCmd, dwData);

@@ -23,91 +23,91 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../utility/common.h"
 #include <string>
 
-typedef int (__cdecl *ModuleInitExFunc) (HWND, HINSTANCE, LPCSTR);
+typedef int (__cdecl *ModuleInitExFunc) (HWND, HINSTANCE, LPCWSTR);
 typedef int (__cdecl *ModuleQuitFunc) (HINSTANCE);
 
 class Module
 {
 private:
-	HINSTANCE m_hInstance;
-	HANDLE m_hThread;
-	HWND m_hMainWindow;
-	DWORD m_dwThreadID;
+  HINSTANCE m_hInstance;
+  HANDLE m_hThread;
+  HWND m_hMainWindow;
+  DWORD m_dwThreadID;
 
-    std::basic_string<TCHAR> m_tzLocation;
-    std::basic_string<TCHAR> m_tzAppPath;
+  std::wstring m_wszLocation;
+  std::wstring m_wszAppPath;
 
-	ModuleInitExFunc m_pInitEx;
-	ModuleQuitFunc m_pQuit;
+  ModuleInitExFunc m_pInitEx;
+  ModuleQuitFunc m_pQuit;
 
-	DWORD m_dwFlags;
+  DWORD m_dwFlags;
 
-	HANDLE m_hInitEvent;
-	HANDLE m_hInitCopyEvent;
+  HANDLE m_hInitEvent;
+  HANDLE m_hInitCopyEvent;
 
 public:
-	Module(const std::string& sLocation, DWORD dwFlags);
-	virtual ~Module();
+  Module(const std::wstring& sLocation, DWORD dwFlags);
+  virtual ~Module();
 
-    bool Init(HWND hMainWindow, const std::string& sAppPath);
-	void Quit();
+    bool Init(HWND hMainWindow, const std::wstring& sAppPath);
+  void Quit();
 
-	static UINT __stdcall ThreadProc(void* dllModPtr);
-	static void HandleThreadMessage(MSG &msg);
+  static UINT __stdcall ThreadProc(void* dllModPtr);
+  static void HandleThreadMessage(MSG &msg);
 
-	HINSTANCE GetInstance() const
-	{
-		return m_hInstance;
-	};
+  HINSTANCE GetInstance() const
+  {
+    return m_hInstance;
+  };
 
-	HANDLE GetThread() const
-	{
-		return m_hThread;
-	};
+  HANDLE GetThread() const
+  {
+    return m_hThread;
+  };
 
-	/* Caller may NOT call CloseHandle() until the thread
-	 * has an exit signal. */
-	HANDLE TakeThread()
-	{
-		HANDLE hTemp = m_hThread;
-		m_hThread = NULL;
+  /* Caller may NOT call CloseHandle() until the thread
+   * has an exit signal. */
+  HANDLE TakeThread()
+  {
+    HANDLE hTemp = m_hThread;
+    m_hThread = NULL;
 
-		return hTemp;
-	};
+    return hTemp;
+  };
 
-	HANDLE GetInitEvent() const
-	{
-		return m_hInitEvent;
-	};
+  HANDLE GetInitEvent() const
+  {
+    return m_hInitEvent;
+  };
 
-	/* Caller may NOT call CloseHandle() until the event
-	 * has been set to signaled. */
-	HANDLE TakeInitEvent()
-	{
-		HANDLE hTemp = m_hInitEvent;
-		m_hInitEvent = NULL;
+  /* Caller may NOT call CloseHandle() until the event
+   * has been set to signaled. */
+  HANDLE TakeInitEvent()
+  {
+    HANDLE hTemp = m_hInitEvent;
+    m_hInitEvent = NULL;
 
-		return hTemp;
-	};
+    return hTemp;
+  };
 
-	LPCTSTR GetLocation() const
-	{
-		return m_tzLocation.c_str();
-	};
+  LPCWSTR GetLocation() const
+  {
+    return m_wszLocation.c_str();
+  };
 
-	DWORD GetFlags() const
+  DWORD GetFlags() const
     {
         return m_dwFlags;
     }
 
-	ModuleQuitFunc GetQuit() const
-	{
-		return m_pQuit;
-	};
-	ModuleInitExFunc GetInitEx() const
-	{
-		return m_pInitEx;
-	};
+  ModuleQuitFunc GetQuit() const
+  {
+    return m_pQuit;
+  };
+  ModuleInitExFunc GetInitEx() const
+  {
+    return m_pInitEx;
+  };
 
 
 private:

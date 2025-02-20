@@ -1,6 +1,7 @@
 /*
 This is a part of the LiteStep Shell Source code.
 
+Copyright (C) 2025 The x7 Dev Team
 Copyright (C) 1997-2002 The LiteStep Development Team
 
 This program is free software; you can redistribute it and/or
@@ -31,31 +32,31 @@ typedef std::list<Module*> ModuleQueue;
 class ModuleManager: public IManager
 {
 public:
-	ModuleManager();
-	virtual ~ModuleManager();
-	
-	// IManager
-	HRESULT Start(ILiteStep *ILiteStep);
-	HRESULT Stop();
-	
-	HRESULT rStart();
-	HRESULT rStop();
-	
-	BOOL LoadModule(LPCSTR pszLocation, DWORD dwFlags);
-	BOOL QuitModule(HINSTANCE hModule);
-    BOOL QuitModule(LPCSTR pszLocation);
+  ModuleManager();
+  virtual ~ModuleManager();
+  
+  // IManager
+  HRESULT Start(ILiteStep *ILiteStep);
+  HRESULT Stop();
+  
+  HRESULT rStart();
+  HRESULT rStop();
+  
+  BOOL LoadModule(LPCWSTR pwszLocation, DWORD dwFlags);
+  BOOL QuitModule(HINSTANCE hModule);
+    BOOL QuitModule(LPCWSTR pwszLocation);
     BOOL ReloadModule(HINSTANCE hModule);
 
     HRESULT EnumModules(LSENUMMODULESPROC pfnCallback, LPARAM lParam) const;
-	
+  
 private:
-	UINT _LoadModules();
-	UINT _StartModules(ModuleQueue& mqModules);
-	void _QuitModules();
-	
-	ModuleQueue::iterator _FindModule(LPCSTR pszLocation);
+  UINT _LoadModules();
+  UINT _StartModules(ModuleQueue& mqModules);
+  void _QuitModules();
+  
+  ModuleQueue::iterator _FindModule(LPCWSTR pwszLocation);
     ModuleQueue::iterator _FindModule(HINSTANCE hModule);
-    Module* _MakeModule(LPCSTR pszLocation, DWORD dwFlags);
+    Module* _MakeModule(LPCWSTR pwszLocation, DWORD dwFlags);
     
     void _WaitForModules(const HANDLE* pHandles, DWORD dwCount) const;
     
@@ -63,19 +64,19 @@ private:
     ILiteStep *m_pILiteStep;
 
     HWND m_hLiteStep;
-    std::string m_sAppPath;
+    std::wstring m_wsAppPath;
     
     struct IsLocationEqual
     {
-        IsLocationEqual(LPCSTR pszLocation) : m_pszLocation(pszLocation){}
+        IsLocationEqual(LPCWSTR pwszLocation) : m_pwszLocation(pwszLocation){}
         
         bool operator() (const Module* pModule) const
         {
-            return (_stricmp(m_pszLocation, pModule->GetLocation()) == 0);
+            return (_wcsicmp(m_pwszLocation, pModule->GetLocation()) == 0);
         }
         
     private:
-        LPCSTR m_pszLocation;
+        LPCWSTR m_pwszLocation;
     };
     
     struct IsInstanceEqual

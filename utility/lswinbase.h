@@ -22,6 +22,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "common.h"
 
+#include <string>
+
 #define BEGIN_MESSAGEPROC switch (message.uMsg) {
 #define MESSAGE(handler, msg) case msg: handler(message); break;
 #define REJECT_MESSAGE(msg) case msg: break;
@@ -55,14 +57,14 @@ class Window
 {
 protected:
 	static WNDCLASSEX windowClass;
-	static LPCSTR className;
+	static LPCWSTR className;
 	static DWORD instanceCount;
 	static HINSTANCE hInstance;
 	HWND hWnd;
 	HWND hParent;
 
 public:
-	Window(LPCSTR className);
+	Window(LPCWSTR className);
 	virtual ~Window();
 	const HWND handle() const;
 
@@ -70,7 +72,7 @@ public:
 	static HINSTANCE instance();
 
 protected:
-	bool createWindow(DWORD dwExStyle, LPCSTR lpWindowName, DWORD dwStyle,
+	bool createWindow(DWORD dwExStyle, LPCWSTR lpWindowName, DWORD dwStyle,
 	                  int x, int y, int nWidth, int nHeight, HWND hWndParent);
 	bool destroyWindow();
 

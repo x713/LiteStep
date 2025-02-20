@@ -30,7 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 using namespace std;
 
 
-bool MathEvaluateBool(const SettingsMap& context, const string& expression,
+bool MathEvaluateBool(const SettingsMap& context, const wstring& expression,
     bool& result, unsigned int flags)
 {
     try
@@ -42,15 +42,16 @@ bool MathEvaluateBool(const SettingsMap& context, const string& expression,
     catch (const MathException& e)
     {
         // FIXME: Localize this
-        ostringstream message;
+        wostringstream message;
         
-        message << "Error in Expression:\n  "
-                << expression << "\n"
-                << "\n"
-                << "Description:\n  "
+        message << L"Error in Expression:\n  "
+                << expression << L"\n"
+                << L"\n"
+                << L"Description:\n  "
                 << e.what();
         
-        Error(LOCALIZE_THIS, message.str().c_str());
+        // TODO : fix
+        //Error(LOCALIZE_THIS, message.str().c_str());
         return false;
     }
     
@@ -58,8 +59,9 @@ bool MathEvaluateBool(const SettingsMap& context, const string& expression,
 }
 
 
-bool MathEvaluateString(const SettingsMap& context, const string& expression,
-    string& result, const StringSet& recursiveVarSet, unsigned int flags)
+
+bool MathEvaluateString(const SettingsMap& context, const wstring& expression,
+    wstring& result, const StringSet& recursiveVarSet, unsigned int flags)
 {
     try
     {
@@ -77,15 +79,16 @@ bool MathEvaluateString(const SettingsMap& context, const string& expression,
     catch (const MathException& e)
     {
         // FIXME: Localize this
-        ostringstream message;
+        wostringstream message;
         
-        message << "Error in Expression:\n  "
-                << expression << "\n"
-                << "\n"
-                << "Description:\n  "
+        message << L"Error in Expression:\n  "
+                << expression << L"\n"
+                << L"\n"
+                << L"Description:\n  "
                 << e.what();
         
-        Error(LOCALIZE_THIS, message.str().c_str());
+        // TODO : fix
+        //Error(LOCALIZE_THIS, message.str().c_str());
         return false;
     }
     

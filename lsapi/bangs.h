@@ -1,6 +1,7 @@
 /*
 This is a part of the LiteStep Shell Source code.
 
+Copyright (C) 2025 The x7 Dev Team
 Copyright (C) 1997-2002 The LiteStep Development Team
 
 This program is free software; you can redistribute it and/or
@@ -24,28 +25,28 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 void SetupBangs();
 
-void BangAbout(HWND hCaller, LPCSTR pszArgs);
-void BangAlert(HWND hCaller, LPCSTR pszArgs);
-void BangCascadeWindows(HWND hCaller, LPCSTR pszArgs);
-void BangConfirm(HWND hCaller, LPCSTR pszArgs);
-void BangExecute(HWND hCaller, LPCSTR pszArgs);
-void BangHideModules (HWND hCaller, LPCSTR pszArgs);
-void BangLogoff(HWND hCaller, LPCSTR pszArgs);
-void BangMinimizeWindows(HWND hCaller, LPCSTR pszArgs);
-void BangQuit(HWND caller, LPCSTR param);
-void BangRecycle (HWND hCaller, LPCSTR pszArgs);
-void BangRefresh(HWND hCaller, LPCSTR pszArgs);
-void BangReload(HWND hCaller, LPCSTR pszArgs);
-void BangReloadModule (HWND hCaller, LPCSTR pszArgs);
-void BangRestoreWindows(HWND hCaller, LPCSTR pszArgs);
-void BangRun (HWND hCaller, LPCSTR pszArgs);
-void BangShowModules (HWND hCaller, LPCSTR pszArgs);
-void BangShutdown(HWND hCaller, LPCSTR pszArgs);
-void BangSwitchUser(HWND hCaller, LPCSTR pszArgs);
-void BangTileWindowsH(HWND hCaller, LPCSTR pszArgs);
-void BangTileWindowsV(HWND hCaller, LPCSTR pszArgs);
-void BangToggleModules (HWND hCaller, LPCSTR pszArgs);
-void BangUnloadModule (HWND hCaller, LPCSTR pszArgs);
+void BangAbout(HWND hCaller, LPCWSTR pwszArgs);
+void BangAlert(HWND hCaller, LPCWSTR pwszArgs);
+void BangCascadeWindows(HWND hCaller, LPCWSTR pwszArgs);
+void BangConfirm(HWND hCaller, LPCWSTR pwszArgs);
+void BangExecute(HWND hCaller, LPCWSTR pwszArgs);
+void BangHideModules (HWND hCaller, LPCWSTR pwszArgs);
+void BangLogoff(HWND hCaller, LPCWSTR pwszArgs);
+void BangMinimizeWindows(HWND hCaller, LPCWSTR pwszArgs);
+void BangQuit(HWND caller, LPCWSTR param);
+void BangRecycle (HWND hCaller, LPCWSTR pwszArgs);
+void BangRefresh(HWND hCaller, LPCWSTR pwszArgs);
+void BangReload(HWND hCaller, LPCWSTR pwszArgs);
+void BangReloadModule (HWND hCaller, LPCWSTR pwszArgs);
+void BangRestoreWindows(HWND hCaller, LPCWSTR pwszArgs);
+void BangRun (HWND hCaller, LPCWSTR pwszArgs);
+void BangShowModules (HWND hCaller, LPCWSTR pwszArgs);
+void BangShutdown(HWND hCaller, LPCWSTR pwszArgs);
+void BangSwitchUser(HWND hCaller, LPCWSTR pwszArgs);
+void BangTileWindowsH(HWND hCaller, LPCWSTR pwszArgs);
+void BangTileWindowsV(HWND hCaller, LPCWSTR pwszArgs);
+void BangToggleModules (HWND hCaller, LPCWSTR pwszArgs);
+void BangUnloadModule (HWND hCaller, LPCWSTR pwszArgs);
 
 #endif // __BANGS_H
 

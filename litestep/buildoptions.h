@@ -1,6 +1,8 @@
+#pragma once
 /*
 This is a part of the LiteStep Shell Source code.
 
+Copyright (C) 2025 The x7 Dev Team
 Copyright (C) 1997-2003 The LiteStep Development Team
 
 This program is free software; you can redistribute it and/or

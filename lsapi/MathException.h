@@ -1,6 +1,8 @@
+#pragma once
 /*
 This is a part of the LiteStep Shell Source code.
 
+Copyright (C) 2025 The x7 Dev Team
 Copyright (C) 2006 The LiteStep Development Team
 
 This program is free software; you can redistribute it and/or
@@ -20,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #if !defined(MATHEXCEPTION_H)
 #define MATHEXCEPTION_H
 
+#include "../utility/common.h"
 #include <stdexcept>
 #include <string>
 
@@ -31,10 +34,15 @@ class MathException : public std::runtime_error
 {
 public:
 
-    /**
-     * Constructs a MathException with the specified message.
-     */
-    MathException(const std::string& message) throw() : std::runtime_error(message) { }
+  /**
+   * Constructs a MathException with the specified message.
+   */
+
+  //MathException(const std::string& message) throw() : std::runtime_error(message) { }
+  MathException(const std::wstring& message) noexcept : std::runtime_error(ConvertWstringToString(message)) {}
+
+private:
+
 };
 
 

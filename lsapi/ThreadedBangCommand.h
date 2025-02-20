@@ -1,6 +1,7 @@
 /*
 This is a part of the LiteStep Shell Source code.
 
+Copyright (C) 2025 The x7 Dev Team
 Copyright (C) 1997-2005 The LiteStep Development Team
 
 This program is free software; you can redistribute it and/or
@@ -28,21 +29,21 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 class ThreadedBangCommand : public CountedBase
 {
 public:
-    ThreadedBangCommand(HWND hCaller, LPCSTR pszName, LPCSTR pszParams)
+    ThreadedBangCommand(HWND hCaller, LPCWSTR pwszName, LPCWSTR pwszParams)
     :m_hCaller(hCaller)
     {
-        ASSERT_ISNOTNULL(pszName);
+        ASSERT_ISNOTNULL(pwszName);
 
-        // pszName is guaranteed to be non-NULL
-        StringCchCopy(m_szName, MAX_BANGCOMMAND, pszName);
+        // pwszName is guaranteed to be non-NULL
+        StringCchCopy(m_wszName, MAX_BANGCOMMAND, pwszName);
 
-        if (pszParams)
+        if (pwszParams)
         {
-            StringCchCopy(m_szParams, MAX_BANGARGS, pszParams);
+            StringCchCopy(m_wszParams, MAX_BANGARGS, pwszParams);
         }
         else
         {
-            m_szParams[0] = '\0';
+            m_wszParams[0] = '\0';
         }
     }
 
@@ -51,12 +52,12 @@ public:
         // Cannot use ParseBangCommand here because that would expand variables
         // again - and some themes rely on the fact that they are expanded only
         // once. Besides, it would create inconsistent behavior.
-        InternalExecuteBangCommand(m_hCaller, m_szName, m_szParams);
+        InternalExecuteBangCommand(m_hCaller, m_wszName, m_wszParams);
     }
 
 private:
-    char m_szName[MAX_BANGCOMMAND];
-    char m_szParams[MAX_BANGARGS];
+    wchar_t m_wszName[MAX_BANGCOMMAND];
+    wchar_t m_wszParams[MAX_BANGARGS];
     HWND m_hCaller;
 };
 

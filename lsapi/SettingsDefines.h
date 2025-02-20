@@ -1,6 +1,7 @@
 /*
 This is a part of the LiteStep Shell Source code.
 
+Copyright (C) 2025 The x7 Dev Team
 Copyright (C) 2002-2003,2005 The LiteStep Development Team
 
 This program is free software; you can redistribute it and/or
@@ -27,11 +28,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <set>
 
 
-typedef std::multimap<std::string, std::string, stringicmp> SettingsMap;
-typedef std::map<std::string, SettingsMap::iterator, stringicmp> IteratorMap;
+typedef std::multimap<std::wstring, std::wstring, wstringicmp> SettingsMap;
+
+typedef std::map<std::wstring, SettingsMap::iterator, wstringicmp> IteratorMap;
 
 /** Set of strings with case-insensitive ordering. */
-typedef std::set<std::string, stringicmp> StringSet;
+typedef std::set<std::wstring, wstringicmp> StringSet;
 
 
 #endif // __SETTINGSDEFINES_H_

@@ -1,6 +1,7 @@
 /*
 This is a part of the LiteStep Shell Source code.
 
+Copyright (C) 2025 The x7 Dev Team
 Copyright (C) 1997-2002 The LiteStep Development Team
 
 This program is free software; you can redistribute it and/or
@@ -22,6 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "../utility/common.h"
 
-HBITMAP LoadFromPNG(LPCSTR pszFilename);
+HBITMAP LoadFromPNG(LPCWSTR pwszFilename);
 
 #endif // __PNG_SUPPORT_H

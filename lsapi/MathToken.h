@@ -1,6 +1,7 @@
 /*
 This is a part of the LiteStep Shell Source code.
 
+Copyright (C) 2025 The x7 Dev Team
 Copyright (C) 2006 The LiteStep Development Team
 
 This program is free software; you can redistribute it and/or
@@ -80,7 +81,7 @@ public:
     /**
      * Constructs a token with the specified type and lexical value.
      */
-    MathToken(int type, const std::string& value);
+    MathToken(int type, const std::wstring& value);
     
     /**
      * Returns the type of this token.
@@ -90,7 +91,7 @@ public:
     /**
      * Returns a string description of this token's type.
      */
-    std::string GetTypeName() const;
+    std::wstring GetTypeName() const;
     
     /**
      * Sets the type of this token.
@@ -100,12 +101,12 @@ public:
     /**
      * Returns the lexical value of this token.
      */
-    std::string GetValue() const { return mValue; }
+    std::wstring GetValue() const { return mValue; }
     
     /**
      * Sets the lexical value of this token.
      */
-    void SetValue(const std::string& value);
+    void SetValue(const std::wstring& value);
     
 private:
 
@@ -113,7 +114,7 @@ private:
     int mType;
     
     /** Lexical value */
-    std::string mValue;
+    std::wstring mValue;
 };
 
 

@@ -1,6 +1,8 @@
+#pragma once
 /*
 This is a part of the LiteStep Shell Source code.
 
+Copyright (C) 2025 The x7 Dev Team
 Copyright (C) 1997-2005 The LiteStep Development Team
 
 This program is free software; you can redistribute it and/or
@@ -31,20 +33,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 class BangManager
 {
 private:
-    typedef std::map<std::string, Bang*, stringicmp> BangMap;
+  typedef std::map<std::wstring, Bang*, wstringicmp> BangMap;
 
-    BangMap bang_map;
-	mutable CriticalSection m_cs;
+  BangMap bang_map;
+  mutable CriticalSection m_cs;
 
 public:
-	BangManager();
-	virtual ~BangManager();
+  BangManager();
+  virtual ~BangManager();
 
-	BOOL AddBangCommand(LPCSTR pszName, Bang *pbbBang);
-	BOOL RemoveBangCommand(LPCSTR pszName);
-	void ClearBangCommands();
-	BOOL ExecuteBangCommand(LPCSTR pszName, HWND hCaller, LPCSTR pszParams);
-    HRESULT EnumBangs(LSENUMBANGSPROC pfnCallback, LPARAM lParam) const;
+  BOOL AddBangCommand(LPCWSTR pwszName, Bang* pbbBang);
+  BOOL RemoveBangCommand(LPCWSTR pwszName);
+  void ClearBangCommands();
+  BOOL ExecuteBangCommand(LPCWSTR pwszName, HWND hCaller, LPCWSTR pwszParams);
+  HRESULT EnumBangs(LSENUMBANGSPROC pfnCallback, LPARAM lParam) const;
 };
 
 #endif // __BANGMANAGER_H

@@ -25,10 +25,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "common.h"
 #include <shlobj.h>
 
-bool GetShellFolderPath(int nFolder, LPTSTR ptzPath, size_t cchPath);
-bool GetSystemString(DWORD dwCode, LPTSTR ptzBuffer, size_t cchBuffer);
-HRESULT PathAddBackslashEx(LPTSTR ptzPath, size_t cchPath);
-bool LSGetModuleFileName(HINSTANCE hInst, LPTSTR pszBuffer, DWORD cchBuffer);
+bool GetShellFolderPath(int nFolder, LPWSTR pwzPath, size_t cchPath);
+bool GetSystemString(DWORD dwCode, LPWSTR pwzBuffer, size_t cchBuffer);
+HRESULT PathAddBackslashEx(LPWSTR pwzPath, size_t cchPath);
+bool LSGetModuleFileName(HINSTANCE hInst, LPWSTR pwzBuffer, DWORD cchBuffer);
 HRESULT TryAllowSetForegroundWindow(HWND hWnd);
 
 #endif // __INCLUDE_SHELLHLP_H

@@ -60,6 +60,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <tchar.h>
 
 #include <memory>
+#include <string>       // For std::string and std::wstring
+#include <locale>       // For wstring_convert
+#include <codecvt>      // For codecvt_utf8_utf16 (or codecvt_utf8)
+
 
 #ifdef __GNUC__
 #undef UNREFERENCED_PARAMETER
@@ -69,5 +73,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "debug.hpp"
 #include "../lsapi/lsapidefines.h"
 
+
+inline std::wstring ConvertStringToWstring(const std::string& str) {
+  std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+  return converter.from_bytes(str);
+}
+
+inline std::string ConvertWstringToString(const std::wstring& wstr) {
+  std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+  return converter.to_bytes(wstr);
+}
 
 #endif // __COMMON_H

@@ -1,6 +1,7 @@
 /*
 This is a part of the LiteStep Shell Source code.
 
+Copyright (C) 2025 The x7 Dev Team
 Copyright (C) 2006 The LiteStep Development Team
 
 This program is free software; you can redistribute it and/or
@@ -35,7 +36,7 @@ public:
     /**
      * Constructs a MathScanner that reads from the specified string.
      */
-    MathScanner(const std::string& expression);
+    MathScanner(const std::wstring& expression);
     
     /**
      * Extracts the next token from the input and returns it.
@@ -48,7 +49,7 @@ private:
      * Returns a token for the specified identifier, first checking to see if
      * its a reserved word.
      */
-    MathToken CheckReservedWord(const std::string& identifier);
+    MathToken CheckReservedWord(const std::wstring& identifier);
     
     /**
      * Read the next <code>count</code> characters from the input.
@@ -80,23 +81,23 @@ private:
     /**
      * Returns true if a character is a digit.
      */
-    static bool IsDigit(char ch);
+    static bool IsDigit(wchar_t ch);
     
     /**
      * Returns true if a character can appear as the first character in an
      * identifier (name).
      */
-    static bool IsFirstNameChar(char ch);
+    static bool IsFirstNameChar(wchar_t ch);
     
     /**
      * Returns true if a character can appear in an identifier (name).
      */
-    static bool IsNameChar(char ch);
+    static bool IsNameChar(wchar_t ch);
     
     /**
      * Returns true if a character is a space character.
      */
-    static bool IsSpace(char ch);
+    static bool IsSpace(wchar_t ch);
     
 private:
 
@@ -104,10 +105,10 @@ private:
     enum { LOOKAHEAD = 2 };
     
     /** Character buffer */
-    char mLookahead[LOOKAHEAD];
+    wchar_t mLookahead[LOOKAHEAD];
     
     /** Input stream */
-    std::istringstream mStream;
+    std::wistringstream mStream;
 };
 
 

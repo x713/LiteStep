@@ -1,6 +1,7 @@
 /*
 This is a part of the LiteStep Shell Source code.
 
+Copyright (C) 2025 The x7 Dev Team
 Copyright (C) 1997-2002 The LiteStep Development Team
   
 This program is free software; you can redistribute it and/or
@@ -37,18 +38,44 @@ struct stringicmp
     }
 };
 
+//
+// wstringicmp
+//
+// provides case insensitive string comparison for std::map
+//
+struct wstringicmp
+{
+    bool operator()(const std::wstring &s1, const std::wstring &s2) const
+    {
+        return (_wcsicmp(s1.c_str(), s2.c_str()) < 0);
+    }
+};
+
 
 //
 // stringcmp
 //
-// provides case string comparison for std::map
+// provides case sensitive wstring comparison for std::map
+//
+struct wstringcmp
+{
+  bool operator()(const std::wstring &s1, const std::wstring &s2) const
+  {
+    return (wcscmp(s1.c_str(), s2.c_str()) < 0);
+  }
+};
+
+//
+// wstringcmp
+//
+// provides case sensitive string comparison for std::map
 //
 struct stringcmp
 {
-	bool operator()(const std::string &s1, const std::string &s2) const
-	{
-		return (strcmp(s1.c_str(), s2.c_str()) < 0);
-	}
+  bool operator()(const std::string &s1, const std::string &s2) const
+  {
+    return (strcmp(s1.c_str(), s2.c_str()) < 0);
+  }
 };
 
 

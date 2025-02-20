@@ -1,6 +1,7 @@
 /*
 This is a part of the LiteStep Shell Source code.
 
+Copyright (C) 2025 The x7 Dev Team
 Copyright (C) 1997-2002 The LiteStep Development Team
 
 This program is free software; you can redistribute it and/or
@@ -43,27 +44,27 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 class DDEWorker
 {
 public:
-	DDEWorker();
-	~DDEWorker();
+  DDEWorker();
+  ~DDEWorker();
 
-	BOOL ParseRequest(LPCSTR pszRequest);
-	BOOL ListGroups(LPVOID& pGroupList, UINT& ulSize);
+  BOOL ParseRequest(LPCWSTR pwszRequest);
+  BOOL ListGroups(LPVOID& pGroupList, UINT& ulSize);
 
 private:
 
-	BOOL _FindFiles(LPSTR pszPath, BOOL bFindFolder);
-	BOOL _ShowGroup(LPCTSTR strGroupName, int nShow, BOOL bCommon);
-	BOOL _CreateGroup(LPCTSTR strGroupName, BOOL bCommon);
-	BOOL _DeleteGroup(LPCTSTR strGroupName, BOOL bCommon);
-	BOOL _DeleteItem(LPCTSTR strItem);
-	BOOL _AddItem(LPCTSTR strCmdLine, LPCTSTR pszDescription, LPCTSTR pszIconPath, int nIconIndex, LPCTSTR pszDefDir, WORD dwHotKey, BOOL bMinimize);
-	BOOL _ListGroupsHelper(HANDLE hHeap, char* szPath, LPVOID& pGroupList, UINT& ulSize);
-	DWORD _MatchRequest(LPCSTR pszCommand);
+  BOOL _FindFiles(LPWSTR pwszPath, BOOL bFindFolder);
+  BOOL _ShowGroup(LPCWSTR wstrGroupName, int nShow, BOOL bCommon);
+  BOOL _CreateGroup(LPCWSTR wstrGroupName, BOOL bCommon);
+  BOOL _DeleteGroup(LPCWSTR wstrGroupName, BOOL bCommon);
+  BOOL _DeleteItem(LPCWSTR wstrItem);
+  BOOL _AddItem(LPCWSTR wstrCmdLine, LPCWSTR pwszDescription, LPCWSTR pwszIconPath, int nIconIndex, LPCWSTR pwszDefDir, WORD dwHotKey, BOOL bMinimize);
+  BOOL _ListGroupsHelper(HANDLE hHeap, wchar_t* wszPath, LPVOID& pGroupList, UINT& ulSize);
+  DWORD _MatchRequest(LPCWSTR pwszCommand);
 
-	char m_szCurrentGroup[MAX_PATH];
-	BOOL m_bIsUserAnAdmin;
+  wchar_t m_wszCurrentGroup[MAX_PATH];
+  BOOL m_bIsUserAnAdmin;
 
-	BOOL (__stdcall *SHFindFiles)(LPCITEMIDLIST, LPCITEMIDLIST);
+  BOOL (__stdcall *SHFindFiles)(LPCITEMIDLIST, LPCITEMIDLIST);
 };
 
 #endif // __DDEWROKER_H

@@ -3,6 +3,7 @@
 #define __SAFEPTR_H
 
 #include "common.h"
+#include "windows.h"
 
 //
 // Valid String Pointer Functions
@@ -11,19 +12,12 @@
 //
 // Unicode
 //
-BOOL IsValidStringPtrW(LPCWSTR lpwz);
-#ifdef __cplusplus
-BOOL IsValidStringPtrW(LPCWSTR lpwz, UINT_PTR ucchMax);
-#else // __cplusplus
-BOOL IsValidStringPtrCchW(LPCWSTR lpwz, UINT_PTR ucchMax);
-#endif // __cplusplus
-#ifdef __cplusplus
+BOOL IsValidStringPtrW(LPCWSTR lpcwz);
+
+
 BOOL IsValidStringPtrW(LPWSTR lpwz);
 BOOL IsValidStringPtrW(LPWSTR lpwz, UINT_PTR ucchMax);
-#else
-BOOL IsValidStringReadPtrW(LPWSTR lpwz);
-BOOL IsValidStringReadPtrCchW(LPWSTR lpwz, UINT_PTR ucchMax);
-#endif // __cplusplus
+//BOOL IsValidStringPtrW(LPCWSTR lpwz, UINT_PTR ucchMax);
 
 //
 // Ansi
@@ -69,12 +63,16 @@ BOOL IsValidStringReadPtrCchA(LPSTR lpsz, UINT_PTR ucchMax);
 // Valid Pointer Functions
 //
 BOOL IsValidReadPtr(CONST VOID *lp);
+
 #ifdef __cplusplus
 BOOL IsValidReadPtr(CONST VOID *lp, UINT_PTR ucb);
 #else // __cplusplus
 BOOL IsValidReadPtrUcb(CONST VOID *lp, UINT_PTR ucb);
 #endif // __cplusplus
+
+
 BOOL IsValidWritePtr(LPVOID lp);
+
 #ifdef __cplusplus
 BOOL IsValidWritePtr(LPVOID lp, UINT_PTR ucb);
 #else // __cplusplus

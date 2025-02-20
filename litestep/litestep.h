@@ -43,8 +43,8 @@ class ModuleManager;
 #define LT_RUDEAPP   0xBEAF
 
 // Program Options
-const char szMainWindowClass[] = "TApplication";
-const char szMainWindowTitle[] = "LiteStep";
+const wchar_t wszMainWindowClass[] = L"TApplication";
+const wchar_t wszMainWindowTitle[] = L"LiteStep";
 
 #define GWL_CLASSPOINTER	0
 
@@ -52,69 +52,69 @@ const char szMainWindowTitle[] = "LiteStep";
 class CLiteStep: public ILiteStep
 {
 public:
-	CLiteStep();
-	~CLiteStep();
+  CLiteStep();
+  ~CLiteStep();
 
-	HRESULT Start(HINSTANCE hInstance, int nStartupMode);
+  HRESULT Start(HINSTANCE hInstance, int nStartupMode);
 
-	static LRESULT CALLBACK ExternalWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+  static LRESULT CALLBACK ExternalWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-	// ILiteStep
-	int MessageHandler(MSG &message);
+  // ILiteStep
+  int MessageHandler(MSG &message);
 
 private:
 
-	LRESULT InternalWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+  LRESULT InternalWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-	void _Recycle();
+  void _Recycle();
     HRESULT _EnumRevIDs(LSENUMREVIDSPROC pfnCallback, LPARAM lParam) const;
 
-	// Application instance
-	HINSTANCE m_hInstance;
+  // Application instance
+  HINSTANCE m_hInstance;
 
-	// LSAutoHideModules helpers
-	bool m_bRudeAppBit;
-	bool m_bAutoHideModules;
-	bool m_bAppIsFullScreen; // = false;
-	static bool _IsWindowFullScreen(HWND hWnd);
-	static BOOL CALLBACK _EnumThreadFSWnd(HWND hWnd, LPARAM lParam);
-	bool _IsFullScreenActive(HWND hWnd);
-	void _HandleFullScreenApp(bool isFullscreen);
+  // LSAutoHideModules helpers
+  bool m_bRudeAppBit;
+  bool m_bAutoHideModules;
+  bool m_bAppIsFullScreen; // = false;
+  static bool _IsWindowFullScreen(HWND hWnd);
+  static BOOL CALLBACK _EnumThreadFSWnd(HWND hWnd, LPARAM lParam);
+  bool _IsFullScreenActive(HWND hWnd);
+  void _HandleFullScreenApp(bool isFullscreen);
 
-	// Windows
-	HWND m_hMainWindow; // = NULL;
+  // Windows
+  HWND m_hMainWindow; // = NULL;
 
-	// Shell hooks
-	UINT WM_ShellHook; // = 0;
+  // Shell hooks
+  UINT WM_ShellHook; // = 0;
 
-	// Function blocks
-	UINT m_BlockRecycle; // = 0
+  // Function blocks
+  UINT m_BlockRecycle; // = 0
 
-	//
-	// Manager Related
-	//
-	ModuleManager* m_pModuleManager; // = NULL;
-	DataStore* m_pDataStoreManager; // = NULL;
-	MessageManager* m_pMessageManager; // = NULL;
+  //
+  // Manager Related
+  //
+  ModuleManager* m_pModuleManager; // = NULL;
+  DataStore* m_pDataStoreManager; // = NULL;
+  MessageManager* m_pMessageManager; // = NULL;
 
-	HRESULT _InitManagers();
-	HRESULT _StartManagers();
-	HRESULT _StopManagers();
-	void _CleanupManagers();
+  HRESULT _InitManagers();
+  HRESULT _StartManagers();
+  HRESULT _StopManagers();
+  void _CleanupManagers();
 
-	bool m_bHookManagerStarted; // = false
-	bool m_bSignalExit; // = false
+  bool m_bHookManagerStarted; // = false
+  bool m_bSignalExit; // = false
 
-	//
-	// Service Related
-	//
-	TrayService* m_pTrayService; // = NULL;
+  //
+  // Service Related
+  //
+  TrayService* m_pTrayService; // = NULL;
     std::vector<IService*> m_Services;
     
-	HRESULT _InitServices();
-	HRESULT _StartServices();
-	HRESULT _StopServices();
-	void _CleanupServices();
+  HRESULT _InitServices();
+  HRESULT _StartServices();
+  HRESULT _StopServices();
+  void _CleanupServices();
 };
 
 #endif // __LITESTEP_H

@@ -1,6 +1,8 @@
+#pragma once
 /*
 This is a part of the LiteStep Shell Source code.
 
+Copyright (C) 2025 The x7 Dev Team
 Copyright (C) 1997-2006 The LiteStep Development Team
 
 This program is free software; you can redistribute it and/or
@@ -23,17 +25,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../utility/core.hpp"
 #include "lsapiInit.h"
 
-FILE* LCOpen(LPCSTR pszPath)
+FILE* LCOpen(LPCWSTR pwszPath)
 {
 	FILE * pFile = NULL;
 
 	if (g_LSAPIManager.IsInitialized())
 	{
-		if (pszPath)
+		if (pwszPath)
 		{
-			if (pszPath[0] != '\0')
+			if (pwszPath[0] != '\0')
 			{
-				pFile = g_LSAPIManager.GetSettingsManager()->LCOpen(pszPath);
+				pFile = g_LSAPIManager.GetSettingsManager()->LCOpen(pwszPath);
 			}
 		}
 		if (pFile == NULL)
@@ -62,7 +64,7 @@ BOOL LCClose(FILE *pFile)
 }
 
 
-BOOL LCReadNextCommand(FILE *pFile, LPSTR pszValue, size_t cchValue)
+BOOL LCReadNextCommand(FILE *pFile, LPWSTR pwszValue, size_t cchValue)
 {
 	BOOL bReturn = FALSE;
 
@@ -70,9 +72,9 @@ BOOL LCReadNextCommand(FILE *pFile, LPSTR pszValue, size_t cchValue)
 	{
 		if (NULL != pFile)
 		{
-			if (IsValidStringPtr(pszValue, cchValue))
+			if (IsValidStringPtr(pwszValue, cchValue))
 			{
-				bReturn = g_LSAPIManager.GetSettingsManager()->LCReadNextLineOrCommand(pFile, pszValue, cchValue);
+				bReturn = g_LSAPIManager.GetSettingsManager()->LCReadNextLineOrCommand(pFile, pwszValue, cchValue);
 			}
 		}
 	}
@@ -81,16 +83,16 @@ BOOL LCReadNextCommand(FILE *pFile, LPSTR pszValue, size_t cchValue)
 }
 
 
-BOOL LCReadNextConfig(FILE *pFile, LPCSTR pszConfig, LPSTR pszValue, size_t cchValue)
+BOOL LCReadNextConfig(FILE *pFile, LPCWSTR pwszConfig, LPWSTR pwszValue, size_t cchValue)
 {
 	BOOL bReturn = FALSE;
 
 	if (g_LSAPIManager.IsInitialized())
 	{
-		if ((pFile != NULL) && IsValidStringPtr(pszConfig) &&
-		    IsValidStringPtr(pszValue, cchValue))
+		if ((pFile != NULL) && IsValidStringPtr(pwszConfig) &&
+		    IsValidStringPtr(pwszValue, cchValue))
 		{
-			bReturn = g_LSAPIManager.GetSettingsManager()->LCReadNextConfig(pFile, pszConfig, pszValue, cchValue);
+			bReturn = g_LSAPIManager.GetSettingsManager()->LCReadNextConfig(pFile, pwszConfig, pwszValue, cchValue);
 		}
 	}
 
@@ -98,119 +100,157 @@ BOOL LCReadNextConfig(FILE *pFile, LPCSTR pszConfig, LPSTR pszValue, size_t cchV
 }
 
 
-BOOL LCReadNextLine(FILE *pFile, LPSTR pszValue, size_t cchValue)
+BOOL LCReadNextLine(FILE *pFile, LPWSTR pwszValue, size_t cchValue)
 {
 	BOOL bReturn = FALSE;
 
 	if (g_LSAPIManager.IsInitialized())
 	{
-		if ((pFile != NULL) && IsValidStringPtr(pszValue, cchValue))
+		if ((pFile != NULL) && IsValidStringPtr(pwszValue, cchValue))
 		{
-			bReturn = g_LSAPIManager.GetSettingsManager()->LCReadNextLineOrCommand(pFile, pszValue, cchValue);
+			bReturn = g_LSAPIManager.GetSettingsManager()->LCReadNextLineOrCommand(pFile, pwszValue, cchValue);
 		}
 	}
 
 	return bReturn;
 }
 
-int GetRCInt(LPCSTR szKeyName, int nDefault)
+int GetRCInt(LPCWSTR wszKeyName, int nDefault)
 {
 	if (g_LSAPIManager.IsInitialized())
 	{
-		return g_LSAPIManager.GetSettingsManager()->GetRCInt(szKeyName, nDefault);
+		return g_LSAPIManager.GetSettingsManager()->GetRCInt(wszKeyName, nDefault);
 	}
 
 	return nDefault;
 }
 
 
-BOOL GetRCBool(LPCSTR szKeyName, BOOL ifFound)
+BOOL GetRCBool(LPCWSTR wszKeyName, BOOL ifFound)
 {
 	if (g_LSAPIManager.IsInitialized())
 	{
-		return g_LSAPIManager.GetSettingsManager()->GetRCBool(szKeyName, ifFound);
+		return g_LSAPIManager.GetSettingsManager()->GetRCBool(wszKeyName, ifFound);
 	}
 
 	return !ifFound;
 }
 
 
-BOOL GetRCBoolDef(LPCSTR szKeyName, BOOL bDefault)
+BOOL GetRCBoolDef(LPCWSTR wszKeyName, BOOL bDefault)
 {
 	if (g_LSAPIManager.IsInitialized())
 	{
-		return g_LSAPIManager.GetSettingsManager()->GetRCBoolDef(szKeyName, bDefault);
+		return g_LSAPIManager.GetSettingsManager()->GetRCBoolDef(wszKeyName, bDefault);
 	}
 
 	return bDefault;
 }
 
 
-BOOL GetRCString(LPCSTR szKeyName, LPSTR szValue, LPCSTR defStr, int maxLen)
+BOOL GetRCString(LPCWSTR wszKeyName, LPWSTR wszValue, LPCWSTR defStr, int maxLen)
 {
 	if (g_LSAPIManager.IsInitialized())
 	{
-		return g_LSAPIManager.GetSettingsManager()->GetRCString(szKeyName, szValue, defStr, maxLen);
+		return g_LSAPIManager.GetSettingsManager()->GetRCString(wszKeyName, wszValue, defStr, maxLen);
 	}
-	else if (szValue && defStr)
+	else if (wszValue && defStr)
 	{
-		strncpy(szValue, defStr, maxLen);
+		size_t defStrLen = wcslen(defStr);
+		// Calculate the length to copy
+		size_t copyLen = (defStrLen < maxLen - 1) ? defStrLen : maxLen - 1; 
+
+		errno_t error = wcsncpy_s(wszValue, maxLen, defStr, copyLen);
+
+		if (error != 0) {
+			// Handle the error appropriately (e.g., log it, return an error code)
+			// Example:
+			// std::wcerr << L"Error copying string: " << error << std::endl;
+			return FALSE; // Or return a specific error code
+		}
+		wszValue[maxLen - 1] = L'\0'; // Ensure null termination
 	}
 	return FALSE;
 }
 
 
-COLORREF GetRCColor(LPCSTR szKeyName, COLORREF colDef)
+COLORREF GetRCColor(LPCWSTR wszKeyName, COLORREF colDef)
 {
 	if (g_LSAPIManager.IsInitialized())
 	{
-		return g_LSAPIManager.GetSettingsManager()->GetRCColor(szKeyName, colDef);
+		return g_LSAPIManager.GetSettingsManager()->GetRCColor(wszKeyName, colDef);
 	}
 
 	return colDef;
 }
 
 
-BOOL GetRCLine(LPCSTR szKeyName, LPSTR szBuffer, UINT nBufLen, LPCSTR szDefault)
+
+/*
+BOOL GetRCLine(LPCWSTR wszKeyName, LPWSTR wszBuffer, UINT nBufLen, LPCWSTR wszDefault)
 {
 	if (g_LSAPIManager.IsInitialized())
 	{
-		return g_LSAPIManager.GetSettingsManager()->GetRCLine(szKeyName, szBuffer, nBufLen, szDefault);
+		return g_LSAPIManager.GetSettingsManager()->GetRCLine(wszKeyName, wszBuffer, nBufLen, wszDefault);
 	}
-	else if(szBuffer && szDefault)
+	else if(wszBuffer && wszDefault)
 	{
-		strncpy(szBuffer, szDefault, nBufLen);
+		wcsncpy(wszBuffer, wszDefault, nBufLen);
+	}
+	return FALSE;
+}
+*/
+BOOL GetRCLine(LPCWSTR wszKeyName, LPWSTR wszBuffer, UINT nBufLen, LPCWSTR wszDefault) {
+	if (g_LSAPIManager.IsInitialized()) 
+	{
+		return g_LSAPIManager.GetSettingsManager()->GetRCLine(wszKeyName, wszBuffer, nBufLen, wszDefault);
+	}
+	else if (wszBuffer && wszDefault) 
+	{
+		if (nBufLen > 0) { // Check if nBufLen is valid
+			size_t charsToCopy = wcslen(wszDefault) < nBufLen - 1 ? wcslen(wszDefault) : nBufLen - 1; // Calculate safe copy length
+			wcsncpy_s(wszBuffer, nBufLen, wszDefault, charsToCopy);
+			wszBuffer[charsToCopy] = '\0'; // Ensure null termination
+		}
+		else {
+			// Handle invalid buffer size (nBufLen <= 0)
+			return FALSE; // Or other appropriate error handling
+		}
 	}
 	return FALSE;
 }
 
-BOOL LSGetVariableEx(LPCSTR pszKeyName, LPSTR pszValue, DWORD dwLength)
+
+BOOL LSGetVariableEx(LPCWSTR pwszKeyName, LPWSTR pwszValue, DWORD dwLength)
 {
 	if (g_LSAPIManager.IsInitialized())
 	{
-		return g_LSAPIManager.GetSettingsManager()->GetVariable(pszKeyName, pszValue, dwLength);
+		return g_LSAPIManager.GetSettingsManager()->GetVariable(pwszKeyName, pwszValue, dwLength);
 	}
 
 	return FALSE;
 }
 
-BOOL LSGetVariable(LPCSTR pszKeyName, LPSTR pszValue)
+
+
+
+BOOL LSGetVariable(LPCWSTR pwszKeyName, LPWSTR pwszValue)
 {
 	BOOL bReturn = FALSE;
-	char szTempValue[MAX_LINE_LENGTH];
+	wchar_t wszTempValue[MAX_LINE_LENGTH];
 
-	if (pszValue)
+	if (pwszValue)
 	{
-		pszValue[0] = '\0';
+		pwszValue[0] = '\0';
 	}
 
 	if (g_LSAPIManager.IsInitialized())
 	{
-		bReturn = g_LSAPIManager.GetSettingsManager()->GetVariable(pszKeyName, szTempValue, MAX_LINE_LENGTH);
+		bReturn = g_LSAPIManager.GetSettingsManager()->GetVariable(pwszKeyName, wszTempValue, MAX_LINE_LENGTH);
 
-		if (bReturn && pszValue)
+		if (bReturn && pwszValue)
 		{
-			StringCchCopy(pszValue, strlen(szTempValue) + 1, szTempValue);
+			StringCchCopy(pwszValue, wcslen(wszTempValue) + 1, wszTempValue);
 		}
 	}
 
@@ -218,10 +258,13 @@ BOOL LSGetVariable(LPCSTR pszKeyName, LPSTR pszValue)
 }
 
 
-void LSSetVariable(LPCSTR pszKeyName, LPCSTR pszValue)
+
+
+
+void LSSetVariable(LPCWSTR pwszKeyName, LPCWSTR pwszValue)
 {
 	if (g_LSAPIManager.IsInitialized())
 	{
-		g_LSAPIManager.GetSettingsManager()->SetVariable(pszKeyName, pszValue);
+		g_LSAPIManager.GetSettingsManager()->SetVariable(pwszKeyName, pwszValue);
 	}
 }

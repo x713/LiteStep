@@ -59,14 +59,14 @@ MathValue::MathValue(double value) :
 }
 
 
-MathValue::MathValue(const string& value) :
+MathValue::MathValue(const wstring& value) :
     mType(STRING), mString(value)
 {
 
 }
 
 
-MathValue::MathValue(const char *value) :
+MathValue::MathValue(const wchar_t *value) :
     mType(STRING), mString(value)
 {
 
@@ -100,7 +100,7 @@ MathValue& MathValue::operator=(double value)
 }
 
 
-MathValue& MathValue::operator=(const string& value)
+MathValue& MathValue::operator=(const wstring& value)
 {
     mType = STRING;
     mString = value;
@@ -109,7 +109,7 @@ MathValue& MathValue::operator=(const string& value)
 }
 
 
-MathValue& MathValue::operator=(const char *value)
+MathValue& MathValue::operator=(const wchar_t *value)
 {
     mType = STRING;
     mString = value;
@@ -118,24 +118,24 @@ MathValue& MathValue::operator=(const char *value)
 }
 
 
-string MathValue::GetTypeName() const
+wstring MathValue::GetTypeName() const
 {
     switch (mType)
     {
     case UNDEFINED:
-        return "undefined";
+        return L"undefined";
         
     case BOOLEAN:
-        return "boolean";
+        return L"boolean";
         
     case NUMBER:
-        return "number";
+        return L"number";
         
     case STRING:
-        return "string";
+        return L"string";
     }
     
-    return string();
+    return wstring();
 }
 
 
@@ -153,7 +153,7 @@ bool MathValue::ToBoolean() const
         return (mNumber != 0.0 && !_isnan(mNumber));
         
     case STRING:
-        return (!mString.empty() && _stricmp(mString.c_str(), "false") != 0);
+        return (!mString.empty() && _wcsicmp(mString.c_str(), L"false") != 0);
     }
     
     // Should never happen
@@ -192,15 +192,15 @@ double MathValue::ToNumber() const
 }
 
 
-string MathValue::ToString() const
+wstring MathValue::ToString() const
 {
     switch (mType)
     {
     case UNDEFINED:
-        return "undefined";
+        return L"undefined";
         
     case BOOLEAN:
-        return mBoolean ? "true" : "false";
+        return mBoolean ? L"true" : L"false";
         
     case NUMBER:
         return MathNumberToString(mNumber);
@@ -211,11 +211,11 @@ string MathValue::ToString() const
     
     // Should never happen
     assert(false);
-    return string();
+    return wstring();
 }
 
 
-string MathValue::ToCompatibleString() const
+wstring MathValue::ToCompatibleString() const
 {
     // To keep compatible with 0.24.x math evaluations, we must
     // return an integer formatted string for all number type
@@ -223,7 +223,7 @@ string MathValue::ToCompatibleString() const
     // to returning it as a string.
     if(NUMBER == mType)
     {
-        ostringstream stream;
+        wostringstream stream;
         
         stream << ToInteger();
         
@@ -514,12 +514,12 @@ MathValue MathIntDivide(const MathValue& a, const MathValue& b)
 }
 
 
-string MathNumberToString(double number)
+wstring MathNumberToString(double number)
 {
     if (_finite(number))
     {
         // Number
-        ostringstream stream;
+        wostringstream stream;
         
         stream.precision(numeric_limits<double>::digits10 + 1);
         stream << number;
@@ -529,24 +529,24 @@ string MathNumberToString(double number)
     else if (number == numeric_limits<double>::infinity())
     {
         // Positive infinity
-        return "Infinity";
+        return L"Infinity";
     }
     else if (number == -numeric_limits<double>::infinity())
     {
         // Negative infinity
-        return "-Infinity";
+        return L"-Infinity";
     }
     else
     {
         // Not a Number (NaN)
-        return "NaN";
+        return L"NaN";
     }
 }
 
 
-double MathStringToNumber(const string& str)
+double MathStringToNumber(const wstring& str)
 {
-    istringstream stream(str);
+    wistringstream stream(str);
     double number;
     
     if (stream >> number)
@@ -554,12 +554,12 @@ double MathStringToNumber(const string& str)
         // Number
         return number;
     }
-    else if (_stricmp(str.c_str(), "Infinity") == 0)
+    else if (_wcsicmp(str.c_str(), L"Infinity") == 0)
     {
         // Positive infinity
         return numeric_limits<double>::infinity();
     }
-    else if (_stricmp(str.c_str(), "-Infinity") == 0)
+    else if (_wcsicmp(str.c_str(), L"-Infinity") == 0)
     {
         // Negative infinity
         return -numeric_limits<double>::infinity();

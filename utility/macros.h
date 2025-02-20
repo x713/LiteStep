@@ -16,29 +16,53 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-*/ 
+*/
 /****************************************************************************
 ****************************************************************************/
 #ifndef __LSMACROS_H
 #define __LSMACROS_H
 
 #include "common.h"
+#include <string>
 #include "..\lsapi\lsapi.h"
 
 // Macros for Resource strings and localization
 #ifndef _LSRESOURCEBUFFER
 #define _LSRESOURCEBUFFER
+
+#ifdef _UNICODE
+//static std::wstring resourceTextBuffer;// [MAX_LINE_LENGTH + 1] ;
+//static std::wstring resourceTitleBuffer;// [MAX_LINE_LENGTH + 1] ;
+static wchar_t resourceTextBuffer[MAX_LINE_LENGTH + 1];
+static wchar_t resourceTitleBuffer[MAX_LINE_LENGTH + 1];
+#else
+
 static char resourceTextBuffer[MAX_LINE_LENGTH + 1];
 static char resourceTitleBuffer[MAX_LINE_LENGTH + 1];
-#endif
 
-#define RESOURCE_MSGBOX(instance, id, deftext, title) \
+#endif // _UNICODE
+#endif // _LSRESOURCEBUFFER
+
+
+#ifdef RESOURCE_MSGBOX
+#undef RESOURCE_MSGBOX
+#endif
+#ifdef _UNICODE
+#define RESOURCE_MSGBOX RESOURCE_MSGBOXW
+#else
+#define RESOURCE_MSGBOX RESOURCE_MSGBOXA
+#endif // _UNICODE
+
+
+
+#define RESOURCE_MSGBOXW(instance, id, deftext, title) \
     GetResStr( (instance), (id)                       \
         ,resourceTextBuffer, MAX_LINE_LENGTH          \
         ,deftext);                                    \
     MessageBox( NULL                                  \
         ,resourceTextBuffer, (title)                  \
         ,MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION )
+
 
 #define RESOURCE_MSGBOX_T(instance, id, deftext, titleid, deftitle) \
     GetResStr( (instance), (id)                                     \
@@ -51,11 +75,17 @@ static char resourceTitleBuffer[MAX_LINE_LENGTH + 1];
         ,resourceTextBuffer, resourceTitleBuffer                    \
         ,MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION )
 
+#ifdef _UNICODE
 #define RESOURCE_STR(instance, id, deftext)  \
     GetResStr( (instance), (id)              \
         ,resourceTextBuffer, MAX_LINE_LENGTH \
         ,deftext )
-
+#else
+#define RESOURCE_STR(instance, id, deftext)  \
+    GetResStr( (instance), (id)              \
+        ,resourceTextBuffer, MAX_LINE_LENGTH \
+        ,deftext )
+#endif
 #define RESOURCE_STREX GetResStrEx
 
 #define RESOURCE_DISPLAY_MSGBOX                   \

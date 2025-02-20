@@ -9,6 +9,10 @@
 *.vcproj         # Visual Studio project files (older versions)
 *.vcxproj         # Visual Studio project files (VS 2010 and later)
 *.vcxproj.user    # Visual Studio user-specific project settings
+*.vcxproj
+*.filters
+*.vcxproj.user
+
 *.sln             # Visual Studio solution file (sometimes okay to include, see below)
 *.suo             # Visual Studio solution user options
 *.sdf             # Visual Studio IntelliSense database file
@@ -70,5 +74,3 @@ x86/
 # Resource files (sometimes okay to include, see below)
 # LiteStep use rc files so let them be included
 #*.rc
-*.vcxproj
-*.filters

@@ -35,39 +35,39 @@ BOOL g_fMultiMonInitDone = FALSE;
 
 BOOL InitMultipleMonitorStubs(void)
 {
-	if (g_fMultiMonInitDone)
-	{
-		return g_pfnGetMonitorInfoA != NULL;
-	}
+  if (g_fMultiMonInitDone)
+  {
+    return g_pfnGetMonitorInfoA != NULL;
+  }
 
-	HMODULE hUser32 = GetModuleHandle(_T("USER32"));
+  HMODULE hUser32 = GetModuleHandle(_T("USER32"));
 
-	if (hUser32 &&
-	        (*(FARPROC*) & g_pfnGetSystemMetrics = GetProcAddress(hUser32, "GetSystemMetrics")) != NULL &&
-	        (*(FARPROC*) & g_pfnMonitorFromWindow = GetProcAddress(hUser32, "MonitorFromWindow")) != NULL &&
-	        (*(FARPROC*) & g_pfnMonitorFromRect = GetProcAddress(hUser32, "MonitorFromRect")) != NULL &&
-	        (*(FARPROC*) & g_pfnMonitorFromPoint = GetProcAddress(hUser32, "MonitorFromPoint")) != NULL &&
-	        (*(FARPROC*) & g_pfnEnumDisplayMonitors = GetProcAddress(hUser32, "EnumDisplayMonitors")) != NULL &&
-	        (*(FARPROC*) & g_pfnGetMonitorInfoA = GetProcAddress(hUser32, "GetMonitorInfoA")) != NULL &&
-	        (*(FARPROC*) & g_pfnEnumDisplayDevicesA = GetProcAddress(hUser32, "EnumDisplayDevicesA")) != NULL
-	   )
-	{
-		g_fMultiMonInitDone = TRUE;
-		return TRUE;
-	}
-	else
-	{
-		g_pfnGetSystemMetrics = NULL;
-		g_pfnMonitorFromWindow = NULL;
-		g_pfnMonitorFromRect = NULL;
-		g_pfnMonitorFromPoint = NULL;
-		g_pfnGetMonitorInfoA = NULL;
-		g_pfnEnumDisplayMonitors = NULL;
-		g_pfnEnumDisplayDevicesA = NULL;
+  if (hUser32 &&
+          (*(FARPROC*) & g_pfnGetSystemMetrics = GetProcAddress(hUser32, "GetSystemMetrics")) != NULL &&
+          (*(FARPROC*) & g_pfnMonitorFromWindow = GetProcAddress(hUser32, "MonitorFromWindow")) != NULL &&
+          (*(FARPROC*) & g_pfnMonitorFromRect = GetProcAddress(hUser32, "MonitorFromRect")) != NULL &&
+          (*(FARPROC*) & g_pfnMonitorFromPoint = GetProcAddress(hUser32, "MonitorFromPoint")) != NULL &&
+          (*(FARPROC*) & g_pfnEnumDisplayMonitors = GetProcAddress(hUser32, "EnumDisplayMonitors")) != NULL &&
+          (*(FARPROC*) & g_pfnGetMonitorInfoA = GetProcAddress(hUser32, "GetMonitorInfoA")) != NULL &&
+          (*(FARPROC*) & g_pfnEnumDisplayDevicesA = GetProcAddress(hUser32, "EnumDisplayDevicesA")) != NULL
+     )
+  {
+    g_fMultiMonInitDone = TRUE;
+    return TRUE;
+  }
+  else
+  {
+    g_pfnGetSystemMetrics = NULL;
+    g_pfnMonitorFromWindow = NULL;
+    g_pfnMonitorFromRect = NULL;
+    g_pfnMonitorFromPoint = NULL;
+    g_pfnGetMonitorInfoA = NULL;
+    g_pfnEnumDisplayMonitors = NULL;
+    g_pfnEnumDisplayDevicesA = NULL;
 
-		g_fMultiMonInitDone = TRUE;
-		return FALSE;
-	}
+    g_fMultiMonInitDone = TRUE;
+    return FALSE;
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -79,148 +79,148 @@ BOOL InitMultipleMonitorStubs(void)
 
 int LSGetSystemMetrics(int nIndex)
 {
-	if (InitMultipleMonitorStubs())
-		return g_pfnGetSystemMetrics(nIndex);
+  if (InitMultipleMonitorStubs())
+    return g_pfnGetSystemMetrics(nIndex);
 
-	switch (nIndex)
-	{
-		case SM_CMONITORS:
-		case SM_SAMEDISPLAYFORMAT:
-		return 1;
+  switch (nIndex)
+  {
+    case SM_CMONITORS:
+    case SM_SAMEDISPLAYFORMAT:
+    return 1;
 
-		case SM_XVIRTUALSCREEN:
-		case SM_YVIRTUALSCREEN:
-		return 0;
+    case SM_XVIRTUALSCREEN:
+    case SM_YVIRTUALSCREEN:
+    return 0;
 
-		case SM_CXVIRTUALSCREEN:
-		nIndex = SM_CXSCREEN;
-		break;
+    case SM_CXVIRTUALSCREEN:
+    nIndex = SM_CXSCREEN;
+    break;
 
-		case SM_CYVIRTUALSCREEN:
-		nIndex = SM_CYSCREEN;
-		break;
-	}
+    case SM_CYVIRTUALSCREEN:
+    nIndex = SM_CYSCREEN;
+    break;
+  }
 
-	return GetSystemMetrics(nIndex);
+  return GetSystemMetrics(nIndex);
 }
 
 #define xPRIMARY_MONITOR ((HMONITOR)0x12340042)
 
 HMONITOR LSMonitorFromPoint(POINT ptScreenCoords, DWORD dwFlags)
 {
-	if (InitMultipleMonitorStubs())
-		return g_pfnMonitorFromPoint(ptScreenCoords, dwFlags);
+  if (InitMultipleMonitorStubs())
+    return g_pfnMonitorFromPoint(ptScreenCoords, dwFlags);
 
-	if ((dwFlags & (MONITOR_DEFAULTTOPRIMARY | MONITOR_DEFAULTTONEAREST)) ||
-	        ((ptScreenCoords.x >= 0) &&
-	         (ptScreenCoords.x < GetSystemMetrics(SM_CXSCREEN)) &&
-	         (ptScreenCoords.y >= 0) &&
-	         (ptScreenCoords.y < GetSystemMetrics(SM_CYSCREEN))))
-	{
-		return xPRIMARY_MONITOR;
-	}
+  if ((dwFlags & (MONITOR_DEFAULTTOPRIMARY | MONITOR_DEFAULTTONEAREST)) ||
+          ((ptScreenCoords.x >= 0) &&
+           (ptScreenCoords.x < GetSystemMetrics(SM_CXSCREEN)) &&
+           (ptScreenCoords.y >= 0) &&
+           (ptScreenCoords.y < GetSystemMetrics(SM_CYSCREEN))))
+  {
+    return xPRIMARY_MONITOR;
+  }
 
-	return NULL;
+  return NULL;
 }
 
 HMONITOR LSMonitorFromRect(LPCRECT lprcScreenCoords, DWORD dwFlags)
 {
-	if (InitMultipleMonitorStubs())
-		return g_pfnMonitorFromRect(lprcScreenCoords, dwFlags);
+  if (InitMultipleMonitorStubs())
+    return g_pfnMonitorFromRect(lprcScreenCoords, dwFlags);
 
-	if (dwFlags & (MONITOR_DEFAULTTOPRIMARY | MONITOR_DEFAULTTONEAREST))
-	{
-		return xPRIMARY_MONITOR;
-	}
+  if (dwFlags & (MONITOR_DEFAULTTOPRIMARY | MONITOR_DEFAULTTONEAREST))
+  {
+    return xPRIMARY_MONITOR;
+  }
 
-	RECT rScreen;
-	rScreen.left = 0;
-	rScreen.top = 0;
-	rScreen.right = GetSystemMetrics(SM_CXSCREEN);
-	rScreen.bottom = GetSystemMetrics(SM_CYSCREEN);
+  RECT rScreen;
+  rScreen.left = 0;
+  rScreen.top = 0;
+  rScreen.right = GetSystemMetrics(SM_CXSCREEN);
+  rScreen.bottom = GetSystemMetrics(SM_CYSCREEN);
 
-	RECT rDummy;
-	if(IntersectRect(&rDummy, &rScreen, lprcScreenCoords))
-	{
-		return xPRIMARY_MONITOR;
-	}
+  RECT rDummy;
+  if(IntersectRect(&rDummy, &rScreen, lprcScreenCoords))
+  {
+    return xPRIMARY_MONITOR;
+  }
 
-	return NULL;
+  return NULL;
 }
 
 HMONITOR LSMonitorFromWindow(HWND hWnd, DWORD dwFlags)
 {
-	if (InitMultipleMonitorStubs())
-		return g_pfnMonitorFromWindow(hWnd, dwFlags);
+  if (InitMultipleMonitorStubs())
+    return g_pfnMonitorFromWindow(hWnd, dwFlags);
 
-	if (dwFlags & (MONITOR_DEFAULTTOPRIMARY | MONITOR_DEFAULTTONEAREST))
-		return xPRIMARY_MONITOR;
+  if (dwFlags & (MONITOR_DEFAULTTOPRIMARY | MONITOR_DEFAULTTONEAREST))
+    return xPRIMARY_MONITOR;
 
-	RECT rWnd = {0};
+  RECT rWnd = {0};
 
-	if (IsIconic(hWnd))
-	{
-		WINDOWPLACEMENT wp;
-		wp.length = sizeof(WINDOWPLACEMENT);
+  if (IsIconic(hWnd))
+  {
+    WINDOWPLACEMENT wp;
+    wp.length = sizeof(WINDOWPLACEMENT);
 
-		if(GetWindowPlacement(hWnd, &wp))
-		{
-			// If the window does not have WS_EX_TOOLWINDOW set then the
-			// coordinates are workspace coordinates and we must fix this.
-			if (0 == (WS_EX_TOOLWINDOW & GetWindowLongPtr(hWnd, GWL_EXSTYLE)))
-			{
-				RECT rWA;
-				SystemParametersInfo(SPI_GETWORKAREA, 0, &rWA, 0);
-				OffsetRect(&wp.rcNormalPosition, rWA.left, rWA.top);
-			}
+    if(GetWindowPlacement(hWnd, &wp))
+    {
+      // If the window does not have WS_EX_TOOLWINDOW set then the
+      // coordinates are workspace coordinates and we must fix this.
+      if (0 == (WS_EX_TOOLWINDOW & GetWindowLongPtr(hWnd, GWL_EXSTYLE)))
+      {
+        RECT rWA;
+        SystemParametersInfo(SPI_GETWORKAREA, 0, &rWA, 0);
+        OffsetRect(&wp.rcNormalPosition, rWA.left, rWA.top);
+      }
 
-			CopyRect(&rWnd, &wp.rcNormalPosition);
-		}
-	}
-	else
-	{
-		GetWindowRect(hWnd, &rWnd);
-	}
+      CopyRect(&rWnd, &wp.rcNormalPosition);
+    }
+  }
+  else
+  {
+    GetWindowRect(hWnd, &rWnd);
+  }
 
-	return LSMonitorFromRect(&rWnd, dwFlags);
+  return LSMonitorFromRect(&rWnd, dwFlags);
 }
 
 BOOL LSGetMonitorInfo(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
 {
-	RECT rcWork;
+  RECT rcWork;
 
-	if (InitMultipleMonitorStubs())
-	{
-		return g_pfnGetMonitorInfoA(hMonitor, lpMonitorInfo);
-	}
+  if (InitMultipleMonitorStubs())
+  {
+    return g_pfnGetMonitorInfoA(hMonitor, lpMonitorInfo);
+  }
 
-	if ((hMonitor == xPRIMARY_MONITOR) &&
-	        lpMonitorInfo &&
-	        (lpMonitorInfo->cbSize >= sizeof(MONITORINFO)) &&
-	        SystemParametersInfoA(SPI_GETWORKAREA, 0, &rcWork, 0))
-	{
-		lpMonitorInfo->rcMonitor.left = 0;
-		lpMonitorInfo->rcMonitor.top = 0;
-		lpMonitorInfo->rcMonitor.right = GetSystemMetrics(SM_CXSCREEN);
-		lpMonitorInfo->rcMonitor.bottom = GetSystemMetrics(SM_CYSCREEN);
-		lpMonitorInfo->rcWork = rcWork;
-		lpMonitorInfo->dwFlags = MONITORINFOF_PRIMARY;
+  if ((hMonitor == xPRIMARY_MONITOR) &&
+          lpMonitorInfo &&
+          (lpMonitorInfo->cbSize >= sizeof(MONITORINFO)) &&
+          SystemParametersInfoA(SPI_GETWORKAREA, 0, &rcWork, 0))
+  {
+    lpMonitorInfo->rcMonitor.left = 0;
+    lpMonitorInfo->rcMonitor.top = 0;
+    lpMonitorInfo->rcMonitor.right = GetSystemMetrics(SM_CXSCREEN);
+    lpMonitorInfo->rcMonitor.bottom = GetSystemMetrics(SM_CYSCREEN);
+    lpMonitorInfo->rcWork = rcWork;
+    lpMonitorInfo->dwFlags = MONITORINFOF_PRIMARY;
 
-		if (lpMonitorInfo->cbSize == sizeof(MONITORINFOEXA))
-		{
-			StringCchCopyA(((MONITORINFOEXA*)lpMonitorInfo)->szDevice,
-				CCHDEVICENAME, "DISPLAY");
-		}
-		else if (lpMonitorInfo->cbSize == sizeof(MONITORINFOEXW))
-		{
-			StringCchCopyW(((MONITORINFOEXW*)lpMonitorInfo)->szDevice,
-				CCHDEVICENAME, L"DISPLAY");
-		}
+    if (lpMonitorInfo->cbSize == sizeof(MONITORINFOEXA))
+    {
+      StringCchCopyA(((MONITORINFOEXA*)lpMonitorInfo)->szDevice,
+        CCHDEVICENAME, "DISPLAY");
+    }
+    else if (lpMonitorInfo->cbSize == sizeof(MONITORINFOEXW))
+    {
+      StringCchCopyW(((MONITORINFOEXW*)lpMonitorInfo)->szDevice,
+        CCHDEVICENAME, L"DISPLAY");
+    }
 
-		return TRUE;
-	}
+    return TRUE;
+  }
 
-	return FALSE;
+  return FALSE;
 }
 
 BOOL LSEnumDisplayMonitors(
@@ -229,66 +229,66 @@ BOOL LSEnumDisplayMonitors(
     MONITORENUMPROC lpfnEnumProc,
     LPARAM dwData)
 {
-	RECT rcLimit;
+  RECT rcLimit;
 
-	if (InitMultipleMonitorStubs())
-	{
-		return g_pfnEnumDisplayMonitors(
-		           hdcOptionalForPainting,
-		           lprcEnumMonitorsThatIntersect,
-		           lpfnEnumProc,
-		           dwData);
-	}
+  if (InitMultipleMonitorStubs())
+  {
+    return g_pfnEnumDisplayMonitors(
+               hdcOptionalForPainting,
+               lprcEnumMonitorsThatIntersect,
+               lpfnEnumProc,
+               dwData);
+  }
 
-	if (!lpfnEnumProc)
-		return FALSE;
+  if (!lpfnEnumProc)
+    return FALSE;
 
-	rcLimit.left = 0;
-	rcLimit.top = 0;
-	rcLimit.right = GetSystemMetrics(SM_CXSCREEN);
-	rcLimit.bottom = GetSystemMetrics(SM_CYSCREEN);
+  rcLimit.left = 0;
+  rcLimit.top = 0;
+  rcLimit.right = GetSystemMetrics(SM_CXSCREEN);
+  rcLimit.bottom = GetSystemMetrics(SM_CYSCREEN);
 
-	if (hdcOptionalForPainting)
-	{
-		RECT rcClip;
-		POINT ptOrg;
+  if (hdcOptionalForPainting)
+  {
+    RECT rcClip;
+    POINT ptOrg;
 
-		switch (GetClipBox(hdcOptionalForPainting, &rcClip))
-		{
-			default:
-			if (!GetDCOrgEx(hdcOptionalForPainting, &ptOrg))
-				return FALSE;
+    switch (GetClipBox(hdcOptionalForPainting, &rcClip))
+    {
+      default:
+      if (!GetDCOrgEx(hdcOptionalForPainting, &ptOrg))
+        return FALSE;
 
-			OffsetRect(&rcLimit, -ptOrg.x, -ptOrg.y);
-			if (IntersectRect(&rcLimit, &rcLimit, &rcClip) &&
-			        (!lprcEnumMonitorsThatIntersect ||
-			         IntersectRect(&rcLimit, &rcLimit, lprcEnumMonitorsThatIntersect)))
-			{
+      OffsetRect(&rcLimit, -ptOrg.x, -ptOrg.y);
+      if (IntersectRect(&rcLimit, &rcLimit, &rcClip) &&
+              (!lprcEnumMonitorsThatIntersect ||
+               IntersectRect(&rcLimit, &rcLimit, lprcEnumMonitorsThatIntersect)))
+      {
 
-				break;
-			}
-			//fall thru
-			case NULLREGION:
-			return TRUE;
-			case ERROR:
-			return FALSE;
-		}
-	}
-	else
-	{
-		if (lprcEnumMonitorsThatIntersect &&
-		        !IntersectRect(&rcLimit, &rcLimit, lprcEnumMonitorsThatIntersect))
-		{
+        break;
+      }
+      //fall thru
+      case NULLREGION:
+      return TRUE;
+      case ERROR:
+      return FALSE;
+    }
+  }
+  else
+  {
+    if (lprcEnumMonitorsThatIntersect &&
+            !IntersectRect(&rcLimit, &rcLimit, lprcEnumMonitorsThatIntersect))
+    {
 
-			return TRUE;
-		}
-	}
+      return TRUE;
+    }
+  }
 
-	return lpfnEnumProc(
-	           xPRIMARY_MONITOR,
-	           hdcOptionalForPainting,
-	           &rcLimit,
-	           dwData);
+  return lpfnEnumProc(
+             xPRIMARY_MONITOR,
+             hdcOptionalForPainting,
+             &rcLimit,
+             dwData);
 }
 
 BOOL LSEnumDisplayDevices(
@@ -297,22 +297,22 @@ BOOL LSEnumDisplayDevices(
     PDISPLAY_DEVICEA lpDisplayDevice,
     DWORD dwFlags)
 {
-	if (InitMultipleMonitorStubs())
-		return g_pfnEnumDisplayDevicesA(Unused, iDevNum, lpDisplayDevice, dwFlags);
+  if (InitMultipleMonitorStubs())
+    return g_pfnEnumDisplayDevicesA(Unused, iDevNum, lpDisplayDevice, dwFlags);
 
-	if (Unused != NULL)
-		return FALSE;
+  if (Unused != NULL)
+    return FALSE;
 
-	if (iDevNum != 0)
-		return FALSE;
+  if (iDevNum != 0)
+    return FALSE;
 
-	if (lpDisplayDevice == NULL || lpDisplayDevice->cb != sizeof(DISPLAY_DEVICEA))
-		return FALSE;
+  if (lpDisplayDevice == NULL || lpDisplayDevice->cb != sizeof(DISPLAY_DEVICEA))
+    return FALSE;
 
-	StringCchCopyA(lpDisplayDevice->DeviceName, 32, "DISPLAY");
-	StringCchCopyA(lpDisplayDevice->DeviceString, 128, "DISPLAY");
+  StringCchCopyA(lpDisplayDevice->DeviceName, 32, "DISPLAY");
+  StringCchCopyA(lpDisplayDevice->DeviceString, 128, "DISPLAY");
 
-	lpDisplayDevice->StateFlags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_PRIMARY_DEVICE;
+  lpDisplayDevice->StateFlags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_PRIMARY_DEVICE;
 
-	return TRUE;
+  return TRUE;
 }

@@ -1,3 +1,4 @@
+#pragma once
 /*
 This is a part of the LiteStep Shell Source code.
 
@@ -16,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-*/ 
+*/
 #include "../litestep/buildoptions.h"
 
 // _WINDOWS_ is used by MSVC, _WINDOWS_H is the MinGW variant
@@ -57,175 +58,177 @@ static bool g_bFilter;
 
 static void processGetMsg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	if (IsWindow(g_hwndNotify))
-	{
-		MSG msgd;
-		COPYDATASTRUCT cds = {HOOK_CDS_MSG, sizeof(MSG), &msgd};
+  if (IsWindow(g_hwndNotify))
+  {
+    MSG msgd;
+    COPYDATASTRUCT cds = { HOOK_CDS_MSG, sizeof(MSG), &msgd };
 
-		msgd.hwnd = hwnd;
-		msgd.message = msg;
-		msgd.lParam = lParam;
-		msgd.wParam = wParam;
+    msgd.hwnd = hwnd;
+    msgd.message = msg;
+    msgd.lParam = lParam;
+    msgd.wParam = wParam;
 
-		SendMessage(g_hwndNotify, WM_COPYDATA, (WPARAM)msg, (LPARAM)&cds);
-	}
+    SendMessage(g_hwndNotify, WM_COPYDATA, (WPARAM)msg, (LPARAM)&cds);
+  }
 }
 
 
 static LRESULT CALLBACK getMsgProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
-	if (nCode >= 0 && !g_bFilter)
-	{
-		PMSG pmsg = (PMSG)lParam;
+  if (nCode >= 0 && !g_bFilter)
+  {
+    PMSG pmsg = (PMSG)lParam;
 
-		if (pmsg && pmsg->hwnd)
-		{
-			UINT msg = pmsg->message;
+    if (pmsg && pmsg->hwnd)
+    {
+      UINT msg = pmsg->message;
 
-			if (msg < WM_USER && msg > WM_NULL)
-			{
-				switch (msg)
-				{
-				case WM_TIMER:
-					break;
-				case WM_PAINT:
-					break;
-				default:
-					processGetMsg(pmsg->hwnd, pmsg->message, pmsg->wParam, pmsg->lParam);
-					break;
-				}
-			}
-		}
-	}
+      if (msg < WM_USER && msg > WM_NULL)
+      {
+        switch (msg)
+        {
+        case WM_TIMER:
+          break;
+        case WM_PAINT:
+          break;
+        default:
+          processGetMsg(pmsg->hwnd, pmsg->message, pmsg->wParam, pmsg->lParam);
+          break;
+        }
+      }
+    }
+  }
 
-	return (CallNextHookEx(g_hHookMessage, nCode, wParam, lParam));
+  return (CallNextHookEx(g_hHookMessage, nCode, wParam, lParam));
 }
 
 
 static LRESULT CALLBACK callWndProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
-	if (nCode >= 0 && !g_bFilter)
-	{
-		PCWPSTRUCT pmsg = (PCWPSTRUCT)lParam;
+  if (nCode >= 0 && !g_bFilter)
+  {
+    PCWPSTRUCT pmsg = (PCWPSTRUCT)lParam;
 
-		if (pmsg && pmsg->hwnd)
-		{
-			UINT msg = pmsg->message;
+    if (pmsg && pmsg->hwnd)
+    {
+      UINT msg = pmsg->message;
 
-			if (msg < WM_USER && msg > WM_NULL)
-			{
-				switch (msg)
-				{
-				case WM_ERASEBKGND:
-					break;
-				case WM_NCPAINT:
-					break;
-				case WM_COPYDATA:
-					break;
-				default:
-					processGetMsg(pmsg->hwnd, pmsg->message, pmsg->wParam, pmsg->lParam);
-					break;
-				}
-			}
-		}
-	}
+      if (msg < WM_USER && msg > WM_NULL)
+      {
+        switch (msg)
+        {
+        case WM_ERASEBKGND:
+          break;
+        case WM_NCPAINT:
+          break;
+        case WM_COPYDATA:
+          break;
+        default:
+          processGetMsg(pmsg->hwnd, pmsg->message, pmsg->wParam, pmsg->lParam);
+          break;
+        }
+      }
+    }
+  }
 
-	return (CallNextHookEx(g_hHookCallWnd, nCode, wParam, lParam));
+  return (CallNextHookEx(g_hHookCallWnd, nCode, wParam, lParam));
 }
 
 
 extern "C" __declspec(dllexport) BOOL __cdecl SetHooks(HWND hwndNotify)
 {
-	if (NULL != hwndNotify)
-	{
-		g_hwndNotify = hwndNotify;
+  if (NULL != hwndNotify)
+  {
+    g_hwndNotify = hwndNotify;
 
-		if (NULL == g_hHookCallWnd)
-		{
-			g_hHookCallWnd = SetWindowsHookEx(WH_CALLWNDPROC, callWndProc, g_hinstDll, 0);
-		}
+    if (NULL == g_hHookCallWnd)
+    {
+      g_hHookCallWnd = SetWindowsHookEx(WH_CALLWNDPROC, callWndProc, g_hinstDll, 0);
+    }
 
-		if (NULL == g_hHookMessage)
-		{
-			g_hHookMessage = SetWindowsHookEx(WH_GETMESSAGE, getMsgProc, g_hinstDll, 0);
-		}
+    if (NULL == g_hHookMessage)
+    {
+      g_hHookMessage = SetWindowsHookEx(WH_GETMESSAGE, getMsgProc, g_hinstDll, 0);
+    }
 
-		if (NULL == g_hHookCallWnd || NULL == g_hHookMessage)
-		{
-			SetHooks(NULL);
-		}
-	}
-	else
-	{
-		if (NULL != g_hHookMessage)
-		{
-			UnhookWindowsHookEx(g_hHookMessage);
-			g_hHookMessage = NULL;
-		}
+    if (NULL == g_hHookCallWnd || NULL == g_hHookMessage)
+    {
+      SetHooks(NULL);
+    }
+  }
+  else
+  {
+    if (NULL != g_hHookMessage)
+    {
+      UnhookWindowsHookEx(g_hHookMessage);
+      g_hHookMessage = NULL;
+    }
 
-		if (NULL != g_hHookCallWnd)
-		{
-			UnhookWindowsHookEx(g_hHookCallWnd);
-			g_hHookCallWnd = NULL;
-		}
+    if (NULL != g_hHookCallWnd)
+    {
+      UnhookWindowsHookEx(g_hHookCallWnd);
+      g_hHookCallWnd = NULL;
+    }
 
-		g_hwndNotify = NULL;
-	}
+    g_hwndNotify = NULL;
+  }
 
-	return NULL != g_hwndNotify;
+  return NULL != g_hwndNotify;
 }
 
 
 extern "C" BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-	UNREFERENCED_PARAMETER(lpvReserved);
+  UNREFERENCED_PARAMETER(lpvReserved);
 
-	if (fdwReason == DLL_PROCESS_ATTACH)
-	{
-		// We don't need thread notifications for what we're doing.  Thus, get
-		// rid of them, thereby eliminating some of the overhead of this DLL
-		DisableThreadLibraryCalls(hinstDLL);
+  if (fdwReason == DLL_PROCESS_ATTACH)
+  {
+    // We don't need thread notifications for what we're doing.  Thus, get
+    // rid of them, thereby eliminating some of the overhead of this DLL
+    DisableThreadLibraryCalls(hinstDLL);
 
-		g_hinstDll = hinstDLL;
+    g_hinstDll = hinstDLL;
 
-		HKEY hKey;
+    HKEY hKey;
 
-		// If you are debugging this project, be sure to include your
-		// debugger process (eg. MSDEV.EXE) in the exclusion list!
-		// Otherwise, you'll be asking for a system wide lockup.
-		if (RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\LiteStep\\HookExclude",
-			0, KEY_READ, &hKey) == ERROR_SUCCESS)
-		{
-			char szExeName[MAX_PATH+1] = { 0 };
-			char *szFileName = szExeName;
-			char *tcp;
+    // If you are debugging this project, be sure to include your
+    // debugger process (eg. MSDEV.EXE) in the exclusion list!
+    // Otherwise, you'll be asking for a system wide lockup.
+    if (RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\LiteStep\\HookExclude",
+      0, KEY_READ, &hKey) == ERROR_SUCCESS)
+    {
+      wchar_t szExeName[MAX_PATH + 1] = { 0 };
+      wchar_t* szFileName = szExeName;
+      wchar_t* tcp;
 
-			GetModuleFileName(NULL, szExeName, sizeof(szExeName)-1);
+      //GetModuleFileNameA(NULL, szExeName, sizeof(szExeName)-1);
+      //GetModuleFileNameW(NULL, szExeName, sizeof(szExeName) / sizeof(wchar_t));
+      GetModuleFileName(NULL, szExeName, MAX_PATH);
 
-			for (tcp = szExeName; *tcp; tcp++)
-			{
-				if (*tcp == '/' || *tcp == '\\')
-					szFileName = tcp + 1;
-			}
+      for (tcp = szExeName; *tcp; tcp++)
+      {
+        if (*tcp == '/' || *tcp == '\\')
+          szFileName = tcp + 1;
+      }
 
-			if (RegQueryValueEx(hKey, szFileName, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
-			{
-				g_bFilter = true;
-			}
-			else
-			{
-				g_bFilter = false;
-			}
+      if (RegQueryValueEx(hKey, szFileName, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
+      {
+        g_bFilter = true;
+      }
+      else
+      {
+        g_bFilter = false;
+      }
 
-			RegCloseKey(hKey);
-		}
-	}
+      RegCloseKey(hKey);
+    }
+  }
 
-	return TRUE;
+  return TRUE;
 }
 
 
 extern "C" BOOL WINAPI _DllMainCRTStartup(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-	return DllMain(hinstDLL, fdwReason, lpvReserved);
+  return DllMain(hinstDLL, fdwReason, lpvReserved);
 }

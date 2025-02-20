@@ -1,6 +1,7 @@
 /*
 This is a part of the LiteStep Shell Source code.
 
+Copyright (C) 2025 The x7 Dev Team
 Copyright (C) 2002-2003,2005 The LiteStep Development Team
 
 This program is free software; you can redistribute it and/or
@@ -28,21 +29,21 @@ class SettingsIterator
 {
 
 public:
-    SettingsIterator(SettingsMap* pSettingsMap, std::string szPath);
+  SettingsIterator(SettingsMap* pSettingsMap, std::wstring wszPath);
 
-	BOOL ReadNextLine(LPSTR pszValue, size_t cchValue);
-	BOOL ReadNextConfig(LPCSTR pszConfig, LPSTR pszValue, size_t cchValue);
+  BOOL ReadNextLine(LPWSTR pwszValue, size_t cchValue);
+  BOOL ReadNextConfig(LPCWSTR pwszConfig, LPWSTR pwszValue, size_t cchValue);
 
-    std::string get_Path()
-	{
-		return m_Path;
-	};
+  std::wstring get_Path()
+  {
+    return m_Path;
+  };
 
 private:
-	SettingsMap* m_pSettingsMap;
-	SettingsMap::iterator m_pFileIterator;
-	IteratorMap m_Iterators;
-    std::string m_Path;
+  SettingsMap* m_pSettingsMap;
+  SettingsMap::iterator m_pFileIterator;
+  IteratorMap m_Iterators;
+  std::wstring m_Path;
 };
 
 

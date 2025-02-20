@@ -1,6 +1,7 @@
 /*
 This is a part of the LiteStep Shell Source code.
 
+Copyright (C) 2025 The x7 Dev Team
 Copyright (C) 1997-2002 The LiteStep Development Team
 
 This program is free software; you can redistribute it and/or
@@ -16,605 +17,659 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-*/ 
+*/
 /****************************************************************************
 ****************************************************************************/
 #include "DDEWorker.h"
 #include "../utility/shellhlp.h"
 #include "../utility/core.hpp"
+#include <windows.h>
+#include <shlwapi.h>
+#include <string>   // For std::wstring
+
 
 DDEWorker::DDEWorker()
 {
-	memset(m_szCurrentGroup, 0, MAX_PATH);
+  wmemset(m_wszCurrentGroup, 0, MAX_PATH);
 
-	SC_HANDLE hSC = OpenSCManager(NULL, NULL, GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE);
-	if (hSC)
-	{
-		m_bIsUserAnAdmin = TRUE;
-	}
-	else
-	{
-		m_bIsUserAnAdmin = FALSE;
-	}
+  SC_HANDLE hSC = OpenSCManager(NULL, NULL, GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE);
+  if (hSC)
+  {
+    m_bIsUserAnAdmin = TRUE;
+  }
+  else
+  {
+    m_bIsUserAnAdmin = FALSE;
+  }
 
-	SHFindFiles = (BOOL (__stdcall *)(LPCITEMIDLIST, LPCITEMIDLIST))GetProcAddress(GetModuleHandle("SHELL32.DLL"), (LPCSTR)((long)0x005A));
+  SHFindFiles = (BOOL(__stdcall*)(LPCITEMIDLIST, LPCITEMIDLIST))GetProcAddress(GetModuleHandle(L"SHELL32.DLL"), (LPCSTR)((long)0x005A));
 }
 
 
 DDEWorker::~DDEWorker()
-{}
+{
+}
 
 
 // Handle incoming DDE requests and pass to relevant functions
-BOOL DDEWorker::ParseRequest(LPCSTR pszRequest)
+BOOL DDEWorker::ParseRequest(LPCWSTR pwszRequest)
 {
-	// 10 is the Maximum number of parameters passed in PROGMAN DDE call (AddItem)
-	LPSTR pszParamList[10];      // This holds a list of pointers to args
-	LPSTR pszTmp;
-	LPSTR pszWorkRequest;
-	BOOL bReturn = FALSE;
+  // 10 is the Maximum number of parameters passed in PROGMAN DDE call (AddItem)
+  LPWSTR pwszParamList[10];      // This holds a list of pointers to args
+  LPWSTR pwszTmp;
+  LPWSTR pwszWorkRequest;
+  BOOL bReturn = FALSE;
 
-	DWORD dwRequest = _MatchRequest(pszRequest);
-	if (dwRequest)
-	{
-		size_t stLength = strlen(pszRequest) + 1;
-		pszWorkRequest = new char[stLength];
+  DWORD dwRequest = _MatchRequest(pwszRequest);
+  if (dwRequest)
+  {
+    size_t stLength = wcslen(pwszRequest) + 1;
+    pwszWorkRequest = new wchar_t[stLength];
 
-		StringCchCopy(pszWorkRequest, stLength, pszRequest);
-		pszWorkRequest[stLength - 3] = '\0';
-		pszWorkRequest = strchr(pszWorkRequest, '(');
-		pszWorkRequest++;
+    StringCchCopy(pwszWorkRequest, stLength, pwszRequest);
+    pwszWorkRequest[stLength - 3] = '\0';
+    pwszWorkRequest = wcschr(pwszWorkRequest, '(');
+    pwszWorkRequest++;
 
-		pszParamList[0] = pszWorkRequest;
+    pwszParamList[0] = pwszWorkRequest;
 
-		int nCurIndex = 1;
-		pszTmp = strchr(pszWorkRequest, ','); // find a delimiter
-		while (NULL != pszTmp)
-		{
-			*(pszTmp++) = '\0'; // null terminate and cut.
-			pszParamList[nCurIndex++] = pszTmp; // put it in the pointer list
-			pszTmp = strchr(pszTmp, ','); // get the next onf
-		}
+    int nCurIndex = 1;
+    pwszTmp = wcschr(pwszWorkRequest, ','); // find a delimiter
+    while (NULL != pwszTmp)
+    {
+      *(pwszTmp++) = '\0'; // null terminate and cut.
+      pwszParamList[nCurIndex++] = pwszTmp; // put it in the pointer list
+      pwszTmp = wcschr(pwszTmp, ','); // get the next onf
+    }
 
 
-		// Set initial state of the group to act on:
-		// bCommon ? Perform function on a common group : Perform function on a private group
-		BOOL bCommon = m_bIsUserAnAdmin;
+    // Set initial state of the group to act on:
+    // bCommon ? Perform function on a common group : Perform function on a private group
+    BOOL bCommon = m_bIsUserAnAdmin;
 
-		switch (dwRequest)
-		{
-			// DDE call: e.g. ExploreFolder(idlist[,object])
-			case DDE_REQUEST_EXPLOREFOLDER:
-			{
-				char szParam[MAX_PATH];
-				StringCchPrintf(szParam, MAX_PATH, "/e,/idlist,%s", pszParamList[1]);
-				bReturn = ((ShellExecute(NULL, "open", "explorer.exe", szParam, NULL, SW_SHOW) > HINSTANCE(32)) ? TRUE : FALSE);
-			}
-			break;
+    switch (dwRequest)
+    {
+      // DDE call: e.g. ExploreFolder(idlist[,object])
+    case DDE_REQUEST_EXPLOREFOLDER:
+    {
+      wchar_t wszParam[MAX_PATH];
+      StringCchPrintf(wszParam, MAX_PATH, L"/e,/idlist,%s", pwszParamList[1]);
+      bReturn = ((ShellExecute(NULL, L"open", L"explorer.exe", wszParam, NULL, SW_SHOW) > HINSTANCE(32)) ? TRUE : FALSE);
+    }
+    break;
 
-			// DDE call: e.g. ViewFolder(idlist[,object])
-			case DDE_REQUEST_VIEWFOLDER:
-			{
-				char szParam[MAX_PATH];
-				StringCchPrintf(szParam, MAX_PATH, "/idlist,%s", pszParamList[1]);
-				bReturn = ((ShellExecute(NULL, "open", "explorer.exe", szParam, NULL, SW_SHOW) > HINSTANCE(32)) ? TRUE : FALSE);
-				// Will return too soon if we don't sleep here... funky
-				Sleep(100);
-			}
-			break;
+    // DDE call: e.g. ViewFolder(idlist[,object])
+    case DDE_REQUEST_VIEWFOLDER:
+    {
+      wchar_t wszParam[MAX_PATH];
+      StringCchPrintf(wszParam, MAX_PATH, L"/idlist,%s", pwszParamList[1]);
+      bReturn = ((ShellExecute(NULL, L"open", L"explorer.exe", wszParam, NULL, SW_SHOW) > HINSTANCE(32)) ? TRUE : FALSE);
+      // Will return too soon if we don't sleep here... funky
+      Sleep(100);
+    }
+    break;
 
-			// DDE call: e.g. FindFolder(idlist[,object])
-			case DDE_REQUEST_FINDFOLDER:
-			{
-				bReturn = _FindFiles(pszParamList[0], TRUE);
-			}
-			break;
+    // DDE call: e.g. FindFolder(idlist[,object])
+    case DDE_REQUEST_FINDFOLDER:
+    {
+      bReturn = _FindFiles(pwszParamList[0], TRUE);
+    }
+    break;
 
-			// DDE call: e.g. OpenFindFile(idlist[,object])
-			case DDE_REQUEST_OPENFINDFILE:
-			{
-				bReturn = _FindFiles(pszParamList[0], FALSE);
-			}
-			break;
+    // DDE call: e.g. OpenFindFile(idlist[,object])
+    case DDE_REQUEST_OPENFINDFILE:
+    {
+      bReturn = _FindFiles(pwszParamList[0], FALSE);
+    }
+    break;
 
-			// DDE call: e.g. CreateGroup(GroupName[,CommonGroupFlag])
-			case DDE_REQUEST_CREATEGROUP:
-			{
-				if (2 == nCurIndex) // second parameter forces common/private
-				{
-					bCommon = atoi(pszParamList[1]);
-				}
-				bReturn = _CreateGroup(pszParamList[0], bCommon);
-			}
-			break;
+    // DDE call: e.g. CreateGroup(GroupName[,CommonGroupFlag])
+    case DDE_REQUEST_CREATEGROUP:
+    {
+      if (2 == nCurIndex) // second parameter forces common/private
+      {
+        bCommon = _wtoi(pwszParamList[1]);
+      }
+      bReturn = _CreateGroup(pwszParamList[0], bCommon);
+    }
+    break;
 
-			// DDE call: e.g. DeleteGroup(GroupName[,CommonGroupFlag])
-			case DDE_REQUEST_DELETEGROUP:
-			{
-				if (2 == nCurIndex) // second parameter forces common/private
-				{
-					bCommon = atoi(pszParamList[1]);
-				}
-				bReturn = _DeleteGroup(pszParamList[0], bCommon);
-			}
-			break;
+    // DDE call: e.g. DeleteGroup(GroupName[,CommonGroupFlag])
+    case DDE_REQUEST_DELETEGROUP:
+    {
+      if (2 == nCurIndex) // second parameter forces common/private
+      {
+        bCommon = _wtoi(pwszParamList[1]);
+      }
+      bReturn = _DeleteGroup(pwszParamList[0], bCommon);
+    }
+    break;
 
-			// DDE call: e.g. ShowGroup(GroupName,ShowCommand[,CommonGroupFlag])
-			case DDE_REQUEST_SHOWGROUP:
-			{
-				if (nCurIndex >= 2) // show command: maps to SW_
-				{
-					if (3 == nCurIndex) // third parameter forces common/private
-					{
-						bCommon = atoi(pszParamList[2]);
-					}
-					int nShow = atoi(pszParamList[1]);
-					bReturn = _ShowGroup(pszParamList[0], nShow, bCommon);
-				}
-			}
-			break;
+    // DDE call: e.g. ShowGroup(GroupName,ShowCommand[,CommonGroupFlag])
+    case DDE_REQUEST_SHOWGROUP:
+    {
+      if (nCurIndex >= 2) // show command: maps to SW_
+      {
+        if (3 == nCurIndex) // third parameter forces common/private
+        {
+          bCommon = _wtoi(pwszParamList[2]);
+        }
+        int nShow = _wtoi(pwszParamList[1]);
+        bReturn = _ShowGroup(pwszParamList[0], nShow, bCommon);
+      }
+    }
+    break;
 
-			// DDE call: e.g. DeleteItem(ItemName) : applies to current group
-			case DDE_REQUEST_DELETEITEM:
-			{
-				bReturn = _DeleteItem(pszParamList[0]);
-			}
-			break;
+    // DDE call: e.g. DeleteItem(ItemName) : applies to current group
+    case DDE_REQUEST_DELETEITEM:
+    {
+      bReturn = _DeleteItem(pwszParamList[0]);
+    }
+    break;
 
-			//DDE call: AddItem(CmdLine[,Name[,IconPath[,IconIndex[,xPos,yPos[,DefDir[,
-			//HotKey[,fMinimize[fSeparateMemSpace] ] ] ] ] ] ]) : applies to current group
-			case DDE_REQUEST_ADDITEM:
-			{
-				BOOL bMinimize = FALSE;
-				WORD dwHotKey = 0;
-				LPCSTR pszDefDir = NULL;
-				int nIconIndex = 0;
-				LPCSTR pszIconPath = NULL;
-				LPCSTR pszDescription = NULL;
+    //DDE call: AddItem(CmdLine[,Name[,IconPath[,IconIndex[,xPos,yPos[,DefDir[,
+    //HotKey[,fMinimize[fSeparateMemSpace] ] ] ] ] ] ]) : applies to current group
+    case DDE_REQUEST_ADDITEM:
+    {
+      BOOL bMinimize = FALSE;
+      WORD dwHotKey = 0;
+      LPCWSTR pwszDefDir = NULL;
+      int nIconIndex = 0;
+      LPCWSTR pwszIconPath = NULL;
+      LPCWSTR pwszDescription = NULL;
 
-				switch (nCurIndex)
-				{
-					case 10:  // SeparateMemSpace ignored for now
-					case 9:
-					{ // Minimize
-						bMinimize = (BOOL)atoi(pszParamList[8]);
-					}
-					case 8:
-					{ // HotKey
-						dwHotKey = (WORD)atoi(pszParamList[7]);
-					}
-					case 7:
-					{ // DefDir
-						pszDefDir = pszParamList[6];
-					}
-					case 6:  //xPos and yPos ignored. Not necessary
-					case 5:
-					case 4:
-					{ // IconIndex
-						nIconIndex = atoi(pszParamList[3]);
-					}
-					case 3:
-					{ // IconPath
-						pszIconPath = pszParamList[2];
-					}
-					case 2:
-					{ // Description
-						pszDescription = pszParamList[1];
-					}
-					
-					default:
-					break;
-				}
-				bReturn = _AddItem(pszParamList[0], pszDescription, pszIconPath, nIconIndex, pszDefDir, dwHotKey, bMinimize);
-			}
-			break;
-			
-            default:
-			break;
-		}
-	}
-	return bReturn;
+      switch (nCurIndex)
+      {
+      case 10:  // SeparateMemSpace ignored for now
+      case 9:
+      { // Minimize
+        bMinimize = (BOOL)_wtoi(pwszParamList[8]);
+      }
+      case 8:
+      { // HotKey
+        dwHotKey = (WORD)_wtoi(pwszParamList[7]);
+      }
+      case 7:
+      { // DefDir
+        pwszDefDir = pwszParamList[6];
+      }
+      case 6:  //xPos and yPos ignored. Not necessary
+      case 5:
+      case 4:
+      { // IconIndex
+        nIconIndex = _wtoi(pwszParamList[3]);
+      }
+      case 3:
+      { // IconPath
+        pwszIconPath = pwszParamList[2];
+      }
+      case 2:
+      { // Description
+        pwszDescription = pwszParamList[1];
+      }
+
+      default:
+        break;
+      }
+      bReturn = _AddItem(pwszParamList[0], pwszDescription, pwszIconPath, nIconIndex, pwszDefDir, dwHotKey, bMinimize);
+    }
+    break;
+
+    default:
+      break;
+    }
+  }
+  return bReturn;
 }
 
 
 // List the program groups
 BOOL DDEWorker::ListGroups(LPVOID& pGroupList, UINT& ulSize)
 {
-	char szPath[MAX_PATH];
-	pGroupList = NULL;
-	ulSize = 0;
-	LPSTR pszTemp = NULL;
-	BOOL bReturn = FALSE;
+  wchar_t wszPath[MAX_PATH];
+  pGroupList = NULL;
+  ulSize = 0;
+  LPWSTR pwszTemp = NULL;
+  BOOL bReturn = FALSE;
 
-	// Get user specific folders
-	if (GetShellFolderPath(CSIDL_PROGRAMS, szPath, MAX_PATH))
-	{
-		PathAppend(szPath, "*.*");
+  // Get user specific folders
+  if (GetShellFolderPath(CSIDL_PROGRAMS, wszPath, MAX_PATH))
+  {
+    PathAppend(wszPath, L"*.*");
 
-		HANDLE hHeap = GetProcessHeap();
-		if (hHeap)
-		{
-			if (_ListGroupsHelper(hHeap, szPath, pGroupList, ulSize))
-			{
-				// Get common folders
-				if (GetShellFolderPath(CSIDL_COMMON_PROGRAMS, szPath, MAX_PATH))
-				{
-					PathAppend(szPath, "*.*");
+    HANDLE hHeap = GetProcessHeap();
+    if (hHeap)
+    {
+      if (_ListGroupsHelper(hHeap, wszPath, pGroupList, ulSize))
+      {
+        // Get common folders
+        if (GetShellFolderPath(CSIDL_COMMON_PROGRAMS, wszPath, MAX_PATH))
+        {
+          PathAppend(wszPath, L"*.*");
 
-					if (_ListGroupsHelper(hHeap, szPath, pGroupList, ulSize))
-					{
-						// add null terminator
-						pszTemp = (char*) HeapReAlloc(hHeap, HEAP_ZERO_MEMORY, pGroupList, ulSize + 1);
-						if (pszTemp != NULL)
-						{
-							pszTemp[ulSize] = '\0';
-							pGroupList = (LPVOID) pszTemp;
-							ulSize += 1;
-							bReturn = TRUE;
-						}
-					}
-				}
-			}
-		}
-	}
+          if (_ListGroupsHelper(hHeap, wszPath, pGroupList, ulSize))
+          {
+            // add null terminator
+            pwszTemp = (wchar_t*)HeapReAlloc(hHeap, HEAP_ZERO_MEMORY, pGroupList, ulSize + 1);
+            if (pwszTemp != NULL)
+            {
+              pwszTemp[ulSize] = '\0';
+              pGroupList = (LPVOID)pwszTemp;
+              ulSize += 1;
+              bReturn = TRUE;
+            }
+          }
+        }
+      }
+    }
+  }
 
-	return bReturn;
+  return bReturn;
 }
 
 
-DWORD DDEWorker::_MatchRequest(LPCSTR pszCommand)
+DWORD DDEWorker::_MatchRequest(LPCWSTR pwszCommand)
 {
-	DWORD dwReturn = DDE_REQUEST_NONE;
+  DWORD dwReturn = DDE_REQUEST_NONE;
 
-	if (strstr(pszCommand, "[ExploreFolder(") == pszCommand)
-	{
-		dwReturn = DDE_REQUEST_EXPLOREFOLDER;
-	}
-	else if (strstr(pszCommand, "[ViewFolder(") == pszCommand)
-	{
-		dwReturn = DDE_REQUEST_VIEWFOLDER;
-	}
-	else if (strstr(pszCommand, "[FindFolder(") == pszCommand)
-	{
-		dwReturn = DDE_REQUEST_FINDFOLDER;
-	}
-	else if (strstr(pszCommand, "[OpenFindFile(") == pszCommand)
-	{
-		dwReturn = DDE_REQUEST_OPENFINDFILE;
-	}
-	else if (strstr(pszCommand, "[CreateGroup(") == pszCommand)
-	{
-		dwReturn = DDE_REQUEST_CREATEGROUP;
-	}
-	else if (strstr(pszCommand, "[DeleteGroup(") == pszCommand)
-	{
-		dwReturn = DDE_REQUEST_DELETEGROUP;
-	}
-	else if (strstr(pszCommand, "[ShowGroup(") == pszCommand)
-	{
-		dwReturn = DDE_REQUEST_SHOWGROUP;
-	}
-	else if (strstr(pszCommand, "[AddItem(") == pszCommand)
-	{
-		dwReturn = DDE_REQUEST_ADDITEM;
-	}
-	else if (strstr(pszCommand, "[DeleteItem(") == pszCommand)
-	{
-		dwReturn = DDE_REQUEST_DELETEITEM;
-	}
+  if (wcsstr(pwszCommand, L"[ExploreFolder(") == pwszCommand)
+  {
+    dwReturn = DDE_REQUEST_EXPLOREFOLDER;
+  }
+  else if (wcsstr(pwszCommand, L"[ViewFolder(") == pwszCommand)
+  {
+    dwReturn = DDE_REQUEST_VIEWFOLDER;
+  }
+  else if (wcsstr(pwszCommand, L"[FindFolder(") == pwszCommand)
+  {
+    dwReturn = DDE_REQUEST_FINDFOLDER;
+  }
+  else if (wcsstr(pwszCommand, L"[OpenFindFile(") == pwszCommand)
+  {
+    dwReturn = DDE_REQUEST_OPENFINDFILE;
+  }
+  else if (wcsstr(pwszCommand, L"[CreateGroup(") == pwszCommand)
+  {
+    dwReturn = DDE_REQUEST_CREATEGROUP;
+  }
+  else if (wcsstr(pwszCommand, L"[DeleteGroup(") == pwszCommand)
+  {
+    dwReturn = DDE_REQUEST_DELETEGROUP;
+  }
+  else if (wcsstr(pwszCommand, L"[ShowGroup(") == pwszCommand)
+  {
+    dwReturn = DDE_REQUEST_SHOWGROUP;
+  }
+  else if (wcsstr(pwszCommand, L"[AddItem(") == pwszCommand)
+  {
+    dwReturn = DDE_REQUEST_ADDITEM;
+  }
+  else if (wcsstr(pwszCommand, L"[DeleteItem(") == pwszCommand)
+  {
+    dwReturn = DDE_REQUEST_DELETEITEM;
+  }
 
-	return dwReturn;
+  return dwReturn;
 }
 
-
+/*
 BOOL DDEWorker::_FindFiles(LPSTR pszPath, BOOL bFindFolder)
 {
-	LPMALLOC pMalloc = NULL;
-	BOOL bReturn = FALSE;
-    WCHAR wzPath[MAX_PATH] = { 0 };
+  LPMALLOC pMalloc = NULL;
+  BOOL bReturn = FALSE;
+  WCHAR wzPath[MAX_PATH] = { 0 };
 
-	PathUnquoteSpaces(pszPath);
-    MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, pszPath, -1, wzPath, MAX_PATH);
+  PathUnquoteSpaces(pszPath);
+  MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, pszPath, -1, wzPath, MAX_PATH);
 
-	HRESULT hr = SHGetMalloc(&pMalloc);
-	if (SUCCEEDED(hr))
-	{
-		IShellFolder* psfParent = NULL;
+  HRESULT hr = SHGetMalloc(&pMalloc);
+  if (SUCCEEDED(hr))
+  {
+    IShellFolder* psfParent = NULL;
 
-		hr = SHGetDesktopFolder(&psfParent);
-		if (SUCCEEDED(hr))
-		{
-			LPITEMIDLIST pidl = NULL;
+    hr = SHGetDesktopFolder(&psfParent);
+    if (SUCCEEDED(hr))
+    {
+      LPITEMIDLIST pidl = NULL;
 
-			hr = psfParent->ParseDisplayName(NULL, NULL, wzPath, NULL, &pidl, NULL);
-			if (SUCCEEDED(hr))
-			{
-				if (bFindFolder) // FindFolder
-				{
-					bReturn = (BOOL)SHFindFiles(pidl, NULL);
-				}
-				else // OpenFindFile
-				{
-					bReturn = (BOOL)SHFindFiles(NULL, pidl);
-				}
+      hr = psfParent->ParseDisplayName(NULL, NULL, wzPath, NULL, &pidl, NULL);
+      if (SUCCEEDED(hr))
+      {
+        if (bFindFolder) // FindFolder
+        {
+          bReturn = (BOOL)SHFindFiles(pidl, NULL);
+        }
+        else // OpenFindFile
+        {
+          bReturn = (BOOL)SHFindFiles(NULL, pidl);
+        }
 
-                pMalloc->Free(pidl);
-			}
+        pMalloc->Free(pidl);
+      }
 
-			psfParent->Release();
-		}
+      psfParent->Release();
+    }
 
-		pMalloc->Release();
-	}
+    pMalloc->Release();
+  }
 
-	return bReturn;
+  return bReturn;
+}
+*/
+
+BOOL DDEWorker::_FindFiles(LPWSTR pwszPath, BOOL bFindFolder) {
+  LPMALLOC pMalloc = NULL;
+
+  BOOL bReturn = FALSE;
+  WCHAR wzPath[MAX_PATH] = { 0 };
+
+  PathUnquoteSpaces(pwszPath);
+
+  HRESULT hr = SHGetMalloc(&pMalloc);
+  if (SUCCEEDED(hr))
+  {
+    IShellFolder* psfParent = NULL;
+
+    hr = SHGetDesktopFolder(&psfParent);
+    if (SUCCEEDED(hr))
+    {
+      LPITEMIDLIST pidl = NULL;
+
+      hr = psfParent->ParseDisplayName(NULL, NULL, wzPath, NULL, &pidl, NULL);
+      if (SUCCEEDED(hr))
+      {
+        if (bFindFolder) // FindFolder
+        {
+          bReturn = (BOOL)SHFindFiles(pidl, NULL);
+        }
+        else // OpenFindFile
+        {
+          bReturn = (BOOL)SHFindFiles(NULL, pidl);
+        }
+
+        pMalloc->Free(pidl);
+      }
+
+      psfParent->Release();
+    }
+
+    pMalloc->Release();
+  }
+
+  return bReturn;
 }
 
 
-BOOL DDEWorker::_ShowGroup(LPCTSTR strGroupName, int nShow, BOOL bCommon)
+
+BOOL DDEWorker::_ShowGroup(LPCWSTR wstrGroupName, int nShow, BOOL bCommon)
 {
-	char szFullPath[MAX_PATH];
-	char szPath[MAX_PATH];
-	BOOL bReturn = FALSE;
+  wchar_t wszFullPath[MAX_PATH];
+  wchar_t wszPath[MAX_PATH];
+  BOOL bReturn = FALSE;
 
-	// Get the program group path
-	if (GetShellFolderPath(bCommon ? CSIDL_COMMON_PROGRAMS : CSIDL_PROGRAMS, szPath, MAX_PATH))
-	{
-		StringCchPrintf(szFullPath, MAX_PATH, "%s\\%s\\", szPath, strGroupName);
-		PathQuoteSpaces(szFullPath);
+  // Get the program group path
+  if (GetShellFolderPath(bCommon ? CSIDL_COMMON_PROGRAMS : CSIDL_PROGRAMS, wszPath, MAX_PATH))
+  {
+    StringCchPrintf(wszFullPath, MAX_PATH, L"%s\\%s\\", wszPath, wstrGroupName);
+    PathQuoteSpaces(wszFullPath);
 
-		if (PathIsDirectory(szFullPath))
-		{
-			// open it up!
-			ShellExecute(NULL, "open", szFullPath, NULL, NULL, nShow);
+    if (PathIsDirectory(wszFullPath))
+    {
+      // open it up!
+      ShellExecute(NULL, L"open", wszFullPath, NULL, NULL, nShow);
 
-			// set our current group to this one, as per Progman DDE
-			StringCchCopy(m_szCurrentGroup, MAX_PATH, szFullPath);
+      // set our current group to this one, as per Progman DDE
+      StringCchCopy(m_wszCurrentGroup, MAX_PATH, wszFullPath);
 
-			bReturn = TRUE;
-		}
-	}
+      bReturn = TRUE;
+    }
+  }
 
-	return bReturn;
+  return bReturn;
 }
 
 // Create the program group
-BOOL DDEWorker::_CreateGroup(LPCTSTR strGroupName, BOOL bCommon)
+BOOL DDEWorker::_CreateGroup(LPCWSTR wstrGroupName, BOOL bCommon)
 {
-	char szPath[MAX_PATH];
-	char szFullPath[MAX_PATH];
-	BOOL bReturn = FALSE;
+  wchar_t wszPath[MAX_PATH];
+  wchar_t wszFullPath[MAX_PATH];
+  BOOL bReturn = FALSE;
 
-	// Get the program group path
-	if (GetShellFolderPath(bCommon ? CSIDL_COMMON_PROGRAMS : CSIDL_PROGRAMS, szPath, MAX_PATH))
-	{
-		StringCchPrintf(szFullPath, MAX_PATH, "%s\\%s", szPath, strGroupName);
-		PathQuoteSpaces(szFullPath);
+  // Get the program group path
+  if (GetShellFolderPath(bCommon ? CSIDL_COMMON_PROGRAMS : CSIDL_PROGRAMS, wszPath, MAX_PATH))
+  {
+    StringCchPrintf(wszFullPath, MAX_PATH, L"%s\\%s", wszPath, wstrGroupName);
+    PathQuoteSpaces(wszFullPath);
 
-		// standard create directory call
-		if (CreateDirectory(szFullPath, NULL))
-		{
-			StringCchCopy(m_szCurrentGroup, MAX_PATH, szFullPath);
+    // standard create directory call
+    if (CreateDirectory(wszFullPath, NULL))
+    {
+      StringCchCopy(m_wszCurrentGroup, MAX_PATH, wszFullPath);
 
-			// Hmmm should we show the group here???? Maybe
-			// but not for now.
-			//ShellExecute(NULL, "open", szPath, NULL, NULL, nShow);
+      // Hmmm should we show the group here???? Maybe
+      // but not for now.
+      //ShellExecute(NULL, "open", szPath, NULL, NULL, nShow);
 
-			// Tell the shell that something changed
-			SHChangeNotify(SHCNE_MKDIR, SHCNF_PATH, szFullPath, 0);
+      // Tell the shell that something changed
+      SHChangeNotify(SHCNE_MKDIR, SHCNF_PATH, wszFullPath, 0);
 
-			bReturn = TRUE;
-		}
-		else
-		{
-			if (ERROR_ALREADY_EXISTS == GetLastError())
-			{
-				bReturn = TRUE;
-			}
-		}
-	}
+      bReturn = TRUE;
+    }
+    else
+    {
+      if (ERROR_ALREADY_EXISTS == GetLastError())
+      {
+        bReturn = TRUE;
+      }
+    }
+  }
 
-	return bReturn;
+  return bReturn;
 }
+
+
 
 // Remove the group
-BOOL DDEWorker::_DeleteGroup(LPCTSTR strGroupName, BOOL bCommon)
+BOOL DDEWorker::_DeleteGroup(LPCWSTR wstrGroupName, BOOL bCommon)
 {
-	char szTemp[MAX_PATH];
-	char szPath[MAX_PATH];
-	HANDLE hFind;
-	WIN32_FIND_DATA FindData;
-	BOOL bFindFile = TRUE;
-	BOOL bReturn = FALSE;
+  wchar_t wszTemp[MAX_PATH];
+  wchar_t wszPath[MAX_PATH];
+  HANDLE hFind;
+  WIN32_FIND_DATA FindData;
+  BOOL bFindFile = TRUE;
+  BOOL bReturn = FALSE;
 
-	// Get the program group path
-	if (GetShellFolderPath(bCommon ? CSIDL_COMMON_PROGRAMS : CSIDL_PROGRAMS, szPath, MAX_PATH))
-	{
-        // Append \*.* for FindFirstFile
-		StringCchCopy(szTemp, MAX_PATH, "\\");
-		StringCchCat(szTemp, MAX_PATH, strGroupName);
-		StringCchCat(szPath, MAX_PATH, szTemp);
+  // Get the program group path
+  if (GetShellFolderPath(bCommon ? CSIDL_COMMON_PROGRAMS : CSIDL_PROGRAMS, wszPath, MAX_PATH))
+  {
+    // Append \*.* for FindFirstFile
+    StringCchCopy(wszTemp, MAX_PATH, L"\\");
+    StringCchCat(wszTemp, MAX_PATH, wstrGroupName);
+    StringCchCat(wszPath, MAX_PATH, wszTemp);
 
-		StringCchCopy(szTemp, MAX_PATH, szPath);
-		StringCchCat(szTemp, MAX_PATH, "\\*.*");
+    StringCchCopy(wszTemp, MAX_PATH, wszPath);
+    StringCchCat(wszTemp, MAX_PATH, L"\\*.*");
 
-		// Use FindFirstFile to list dir. contents
-		hFind = FindFirstFile(szTemp, &FindData);
+    // Use FindFirstFile to list dir. contents
+    hFind = FindFirstFile(wszTemp, &FindData);
 
-		// kill them all off
-		while ((INVALID_HANDLE_VALUE != hFind) && bFindFile)
-		{
-			if (*(FindData.cFileName) != '.')
-			{
-				PathAppend(szTemp, FindData.cFileName);
-				DeleteFile(szTemp);
-			}
-			bFindFile = FindNextFile(hFind, &FindData);
-		}
+    // kill them all off
+    while ((INVALID_HANDLE_VALUE != hFind) && bFindFile)
+    {
+      if (*(FindData.cFileName) != '.')
+      {
+        PathAppend(wszTemp, FindData.cFileName);
+        DeleteFile(wszTemp);
+      }
+      bFindFile = FindNextFile(hFind, &FindData);
+    }
 
-		FindClose(hFind);
+    FindClose(hFind);
 
-		bReturn = RemoveDirectory(szPath);
-	}
+    bReturn = RemoveDirectory(wszPath);
+  }
 
-	return bReturn;
+  return bReturn;
 }
 
+
+
+
 // helper function to do allocation for the list of program groups
-BOOL DDEWorker::_ListGroupsHelper(HANDLE hHeap, char* szPath, LPVOID& pGroupList, UINT& ulSize)
+BOOL DDEWorker::_ListGroupsHelper(HANDLE hHeap, wchar_t* wszPath, LPVOID& pGroupList, UINT& ulSize)
 {
-	HANDLE hFind;
-	WIN32_FIND_DATA FindData;
-	BOOL bFindFile = TRUE;
-	char* pszTemp = NULL;
-	BOOL bReturn = FALSE;
+  HANDLE hFind;
+  WIN32_FIND_DATA FindData;
+  BOOL bFindFile = TRUE;
+  wchar_t* pwszTemp = NULL;
+  BOOL bReturn = FALSE;
 
-	// allocate the group list with base zero terminator if NULL
-	if (NULL == pGroupList)
-	{
-		pGroupList = HeapAlloc(hHeap, HEAP_ZERO_MEMORY, 1);
-	}
+  // allocate the group list with base zero terminator if NULL
+  if (NULL == pGroupList)
+  {
+    pGroupList = HeapAlloc(hHeap, HEAP_ZERO_MEMORY, 1);
+  }
 
-	// check allocation
-	if (pGroupList)
-	{
-		// Get the first one
-		hFind = FindFirstFile(szPath, &FindData);
+  // check allocation
+  if (pGroupList)
+  {
+    // Get the first one
+    hFind = FindFirstFile(wszPath, &FindData);
 
-		// iterate through the files
-		// copy their names into a string in which each field is terminated
-		// by \r\n
-		while ((INVALID_HANDLE_VALUE != hFind) && bFindFile)
-		{
-			if (*(FindData.cFileName) != '.' && (FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
-			{
-				int stLen = strlen(FindData.cFileName);
+    // iterate through the files
+    // copy their names into a string in which each field is terminated
+    // by \r\n
+    while ((INVALID_HANDLE_VALUE != hFind) && bFindFile)
+    {
+      if (*(FindData.cFileName) != '.' && (FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
+      {
+        int stLen = wcslen(FindData.cFileName);
 
-				pszTemp = (char*) HeapReAlloc(hHeap, HEAP_ZERO_MEMORY, pGroupList, ulSize + stLen + 2);
-				if (pszTemp != NULL)
-				{
-					CopyMemory(&pszTemp[ulSize], FindData.cFileName, stLen);
-					CopyMemory(&pszTemp[ulSize + stLen], "\r\n", 2);
-					pGroupList = (LPVOID) pszTemp;
-					ulSize += (stLen + 2);
-					bReturn = TRUE;
-				}
-				else
-				{
-					// Cleanup
-					FindClose(hFind);
-					bReturn = FALSE;
-					break;
-				}
-			}
-			// continue to next
-			bFindFile = FindNextFile(hFind, &FindData);
-		}
+        pwszTemp = (wchar_t*)HeapReAlloc(hHeap, HEAP_ZERO_MEMORY, pGroupList, ulSize + stLen + 2);
+        if (pwszTemp != NULL)
+        {
+          CopyMemory(&pwszTemp[ulSize], FindData.cFileName, stLen);
+          CopyMemory(&pwszTemp[ulSize + stLen], L"\r\n", 2);
+          pGroupList = (LPVOID)pwszTemp;
+          ulSize += (stLen + 2);
+          bReturn = TRUE;
+        }
+        else
+        {
+          // Cleanup
+          FindClose(hFind);
+          bReturn = FALSE;
+          break;
+        }
+      }
+      // continue to next
+      bFindFile = FindNextFile(hFind, &FindData);
+    }
 
-		// Cleanup
-		FindClose(hFind);
-	}
-	return bReturn;
+    // Cleanup
+    FindClose(hFind);
+  }
+  return bReturn;
 }
 
 
 // kill an item
-BOOL DDEWorker::_DeleteItem(LPCTSTR strItem)
+BOOL DDEWorker::_DeleteItem(LPCWSTR wstrItem)
 {
-	char szPath[MAX_PATH];
-	BOOL bReturn = FALSE;
+  wchar_t wszPath[MAX_PATH];
+  BOOL bReturn = FALSE;
 
-	if (m_szCurrentGroup[0])
-	{
-		StringCchPrintf(szPath, MAX_PATH, "%s\\%s", m_szCurrentGroup, strItem);
-		bReturn = DeleteFile(szPath);
-	}
+  if (m_wszCurrentGroup[0])
+  {
+    StringCchPrintf(wszPath, MAX_PATH, L"%s\\%s", m_wszCurrentGroup, wstrItem);
+    bReturn = DeleteFile(wszPath);
+  }
 
-	return bReturn;
+  return bReturn;
 }
 
 // Add an item
-BOOL DDEWorker::_AddItem(LPCTSTR strCmdLine, LPCTSTR strDescription, LPCTSTR strIconPath, int nIconIndex, LPCTSTR strDefDir, WORD dwHotKey, BOOL bMinimize)
+BOOL DDEWorker::_AddItem(LPCWSTR wstrCmdLine, LPCTSTR wstrDescription, LPCWSTR wstrIconPath, int nIconIndex, LPCWSTR wstrDefDir, WORD dwHotKey, BOOL bMinimize)
 {
-	char szPath[MAX_PATH];
-	HRESULT hr;
-	IShellLink* pShellLink;
-	IPersistFile* pPersistFile;
-	BOOL bReturn = FALSE;
+  wchar_t wszPath[MAX_PATH];
+  HRESULT hr;
+  IShellLink* pShellLink;
+  IPersistFile* pPersistFile;
+  BOOL bReturn = FALSE;
 
-	// check that we've set a current group via showgroup or creategroup
-	if (m_szCurrentGroup[0])
-	{
-		char szDesc[MAX_PATH];
-		char szArgs[MAX_PATH];
-		char szCmd[MAX_PATH];
+  // check that we've set a current group via showgroup or creategroup
+  if (m_wszCurrentGroup[0])
+  {
+    wchar_t wszDesc[MAX_PATH];
+    wchar_t wszArgs[MAX_PATH];
+    wchar_t wszCmd[MAX_PATH];
 
-		PathQuoteSpaces((char*)strCmdLine);
+    PathQuoteSpaces((wchar_t*)wstrCmdLine);
 
-		LPTSTR strArgs = PathGetArgs(strCmdLine);
-		if (strArgs)
-		{
-			StringCchCopy(szArgs, MAX_PATH, strArgs);
-			PathRemoveArgs((char*)strCmdLine);
-		}
+    LPWSTR strArgs = PathGetArgs(wstrCmdLine);
+    if (strArgs)
+    {
+      StringCchCopy(wszArgs, MAX_PATH, strArgs);
+      PathRemoveArgs((wchar_t*)wstrCmdLine);
+    }
 
-		PathUnquoteSpaces((char*) strCmdLine);
-		StringCchCopy(szCmd, MAX_PATH, strCmdLine);
+    PathUnquoteSpaces((wchar_t*)wstrCmdLine);
+    StringCchCopy(wszCmd, MAX_PATH, wstrCmdLine);
 
-		if (strDescription)
-		{
-			StringCchCopy(szDesc, MAX_PATH, PathFindFileName(strCmdLine));
-			PathRemoveExtension(szDesc);
-		}
-		else
-		{
-			PathUnquoteSpaces((char*) strDescription);
-			StringCchCopy(szDesc, MAX_PATH, strDescription);
-		}
+    if (wstrDescription)
+    {
+      StringCchCopy(wszDesc, MAX_PATH, PathFindFileName(wstrCmdLine));
+      PathRemoveExtension(wszDesc);
+    }
+    else
+    {
+      PathUnquoteSpaces((wchar_t*)wstrDescription);
+      StringCchCopy(wszDesc, MAX_PATH, wstrDescription);
+    }
 
-		StringCchPrintf(szPath, MAX_PATH, "%s\\%s.lnk", m_szCurrentGroup, szDesc);
+    StringCchPrintf(wszPath, MAX_PATH, L"%s\\%s.lnk", m_wszCurrentGroup, wszDesc);
 
-		hr = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
-		                      IID_IShellLink, (LPVOID*) & pShellLink);
-		if (SUCCEEDED(hr))
-		{
-			// Set the shortcut info.
-			pShellLink->SetDescription(szDesc);
-			pShellLink->SetHotkey(dwHotKey);
-			pShellLink->SetWorkingDirectory(strDefDir);
-			pShellLink->SetShowCmd(bMinimize ? SW_SHOWMINIMIZED : SW_SHOWNORMAL);
-			pShellLink->SetArguments(szArgs);
-			pShellLink->SetPath(szCmd);
+    hr = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
+      IID_IShellLink, (LPVOID*)&pShellLink);
+    if (SUCCEEDED(hr))
+    {
+      // Set the shortcut info.
+      pShellLink->SetDescription(wszDesc);
+      pShellLink->SetHotkey(dwHotKey);
+      pShellLink->SetWorkingDirectory(wstrDefDir);
+      pShellLink->SetShowCmd(bMinimize ? SW_SHOWMINIMIZED : SW_SHOWNORMAL);
+      pShellLink->SetArguments(wszArgs);
+      pShellLink->SetPath(wszCmd);
 
-			if (strIconPath)
-			{
-				pShellLink->SetIconLocation(strIconPath, nIconIndex);
-			}
+      if (wstrIconPath)
+      {
+        pShellLink->SetIconLocation(wstrIconPath, nIconIndex);
+      }
 
-			// Save it.
-			hr = pShellLink->QueryInterface(IID_IPersistFile, (LPVOID*) & pPersistFile);
-			if (SUCCEEDED(hr))
-			{
-				WCHAR wsz[MAX_PATH];
+      // Save it.
+      hr = pShellLink->QueryInterface(IID_IPersistFile, (LPVOID*)&pPersistFile);
+      if (SUCCEEDED(hr))
+      {
+        WCHAR wsz[MAX_PATH];
 
-				// Ensure that the string is ANSI.
-				MultiByteToWideChar(CP_ACP, 0, szPath, -1, wsz, MAX_PATH);
+        // Ensure that the string is ANSI.
+        //MultiByteToWideChar(CP_ACP, 0, wszPath, -1, wsz, MAX_PATH);
 
-				// Save the link by calling IPersistFile::Save.
-				hr = pPersistFile->Save(wsz, TRUE);
-				if (SUCCEEDED(hr))
-				{
-					SHChangeNotify(SHCNE_UPDATEDIR, SHCNF_PATH, m_szCurrentGroup, 0);
-					SHChangeNotify(SHCNE_CREATE, SHCNF_PATH, szPath, 0);
-					bReturn = TRUE;
-				}
-				pPersistFile->Release();
-			}
+        // Save the link by calling IPersistFile::Save.
+        hr = pPersistFile->Save(wsz, TRUE);
+        if (SUCCEEDED(hr))
+        {
+          SHChangeNotify(SHCNE_UPDATEDIR, SHCNF_PATH, m_wszCurrentGroup, 0);
+          SHChangeNotify(SHCNE_CREATE, SHCNF_PATH, wszPath, 0);
+          bReturn = TRUE;
+        }
+        pPersistFile->Release();
+      }
 
-			pShellLink->Release();
-		}
-	}
+      pShellLink->Release();
+    }
+  }
 
-	return bReturn;
+  return bReturn;
 }
 

@@ -1,6 +1,7 @@
 /*
 This is a part of the LiteStep Shell Source code.
 
+Copyright (C) 2025 The x7 Dev Team
 Copyright (C) 1997-2002 The LiteStep Development Team
 
 This program is free software; you can redistribute it and/or
@@ -30,48 +31,48 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 struct FileInfo
 {
-	SettingsMap* m_pSettingsMap;
-	UINT m_Count;
+  SettingsMap* m_pSettingsMap;
+  UINT m_Count;
 };
 
 typedef std::set<SettingsIterator*> IteratorSet;
-typedef std::map<std::string, FileInfo*, stringicmp> FileMap;
+typedef std::map<std::wstring, FileInfo*, wstringicmp> FileMap;
 
 
 class SettingsManager
 {
-	IteratorSet m_Iterators;
-	SettingsMap m_SettingsMap;
-	FileMap m_FileMap;
+  IteratorSet m_Iterators;
+  SettingsMap m_SettingsMap;
+  FileMap m_FileMap;
 
     CriticalSection m_CritSection;
 
 protected:
-	BOOL _FindLine(LPCSTR pszName, SettingsMap::iterator &it);
+  BOOL _FindLine(LPCWSTR pszName, SettingsMap::iterator &it);
 
 public:
-	SettingsManager();
-	~SettingsManager();
+  SettingsManager();
+  ~SettingsManager();
 
-	void ParseFile(LPCSTR pszFileName);
+  void ParseFile(LPCWSTR pwszFileName);
 
-	BOOL GetRCString(LPCSTR pszKeyName, LPSTR pszValue, LPCSTR pszDefStr, int nMaxLen);
-	BOOL GetRCLine(LPCSTR pszKeyName, LPSTR pszValue, int nMaxLen, LPCSTR pszDefStr);
-	BOOL GetRCBool(LPCSTR pszKeyName, BOOL bIfFound);
-	BOOL GetRCBoolDef(LPCSTR pszKeyName, BOOL bDefault);
-	int GetRCInt(LPCSTR pszKeyName, int nDefault);
-	COLORREF GetRCColor(LPCSTR pszKeyName, COLORREF crDefault);
+  BOOL GetRCString(LPCWSTR pwszKeyName, LPWSTR pwszValue, LPCWSTR pwszDefStr, int nMaxLen);
+  BOOL GetRCLine(LPCWSTR pwszKeyName, LPWSTR pwszValue, int nMaxLen, LPCWSTR pwszDefStr);
+  BOOL GetRCBool(LPCWSTR pwszKeyName, BOOL bIfFound);
+  BOOL GetRCBoolDef(LPCWSTR pwszKeyName, BOOL bDefault);
+  int GetRCInt(LPCWSTR pwszKeyName, int nDefault);
+  COLORREF GetRCColor(LPCWSTR pwszKeyName, COLORREF crDefault);
 
-	BOOL GetVariable(LPCSTR pszKeyName, LPSTR pszValue, DWORD dwLength);
-	void SetVariable(LPCSTR pszKeyName, LPCSTR pszValue);
+  BOOL GetVariable(LPCWSTR pwszKeyName, LPWSTR pwszValue, DWORD dwLength);
+  void SetVariable(LPCWSTR pwszKeyName, LPCWSTR pwszValue);
 
-	FILE* LCOpen (LPCSTR pszPath);
-	BOOL LCClose (FILE *pFile);
-	BOOL LCReadNextConfig(FILE *pFile, LPCSTR pszConfig, LPSTR pszValue, size_t cchValue);
-	BOOL LCReadNextLineOrCommand(FILE *pFile, LPSTR pszValue, size_t cchValue);
+  FILE* LCOpen (LPCWSTR pwszPath);
+  BOOL LCClose (FILE *pFile);
+  BOOL LCReadNextConfig(FILE *pFile, LPCWSTR pwszConfig, LPWSTR pwszValue, size_t cchValue);
+  BOOL LCReadNextLineOrCommand(FILE *pFile, LPWSTR pwszValue, size_t cchValue);
 
-	void VarExpansionEx(LPSTR pszExpandedString, LPCSTR pszTemplate, size_t stLength);
-	void VarExpansionEx(LPSTR pszExpandedString, LPCSTR pszTemplate, size_t stLength, const StringSet& recursiveVarSet);
+  void VarExpansionEx(LPWSTR pwszExpandedString, LPCWSTR pwszTemplate, size_t stLength);
+  void VarExpansionEx(LPWSTR pwszExpandedString, LPCWSTR pwszTemplate, size_t stLength, const StringSet& recursiveVarSet);
 };
 
 #endif // __SETTINGSMANAGER_H
