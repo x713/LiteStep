@@ -21,8 +21,28 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __PNG_SUPPORT_H
 #define __PNG_SUPPORT_H
 
-#include "../utility/common.h"
+#include "../utility/common.h" // This line should remain
+#include <string>              // For std::string
 
-HBITMAP LoadFromPNG(LPCWSTR pwszFilename);
+// common.h or its own includes (like windows.h) should provide HBITMAP and LPCWSTR.
+// If common.h is minimal and doesn't include windows.h, then png_support.h
+// might need to #include <windows.h> directly if these types are not defined.
+// For this task, assume common.h handles it or that necessary Windows types are globally available.
+
+
+// --- LSAPI PNG Wrapper API ---
+// Replaces LoadFromPNG as the primary public function for loading PNGs.
+HBITMAP lspng_load_file(LPCWSTR filename);
+
+// Saves raw pixel data to a PNG file.
+// image_data: pointer to the raw pixel data.
+// input_is_bgra: true if image_data is in BGRA format, false if RGBA.
+//                LodePNG expects RGBA for encoding, so conversion might be needed.
+bool lspng_save_file(const std::string& filename, const unsigned char* image_data, unsigned int width, unsigned int height, bool input_is_bgra);
+
+
+// --- Test-related Functions ---
+// Declaration for the main test function to be called by the test runner.
+bool RunPNGLoadTest(); 
 
 #endif // __PNG_SUPPORT_H

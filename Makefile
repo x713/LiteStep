@@ -107,7 +107,7 @@ DLLEXP = $(OUTPUT)\lsapi.exp
 DLLIMPLIB = $(OUTPUT)\liblsapi.dll.a
 
 # Libraries that lsapi.dll uses
-DLLLIBS = -ladvapi32 -lgdi32 -lkernel32 -lmsvcrt -lpng13.dll -lshell32 -lshlwapi -luser32
+DLLLIBS = -ladvapi32 -lgdi32 -lkernel32 -lmsvcrt -lshell32 -lshlwapi -luser32 # -lpng13.dll REMOVED
 
 DLLMAP = $(OUTPUT)\lsapi.map
 
@@ -128,6 +128,7 @@ DLLOBJS = \
 	lsapi\$(OUTPUT)\MathToken.o \
 	lsapi\$(OUTPUT)\MathValue.o \
 	lsapi\$(OUTPUT)\png_support.o \
+	lsapi\$(OUTPUT)\lodepng.o \
 	lsapi\$(OUTPUT)\settings.o \
 	lsapi\$(OUTPUT)\SettingsFileParser.o \
 	lsapi\$(OUTPUT)\SettingsIterator.o \
@@ -169,13 +170,27 @@ UTILOBJS = \
 	utility\$(OUTPUT)\safeptr.o \
 	utility\$(OUTPUT)\shellhlp.o
 
+# Path to lsapi_test_runner.exe
+TESTEXE = $(OUTPUT)\\lsapi_test_runner.exe
+
+TESTEXEMAP = $(OUTPUT)\\lsapi_test_runner.map
+
+# Object files for lsapi_test_runner.exe
+TESTOBJS = \
+	lsapi\\$(OUTPUT)\\lsapi_test_runner.o \
+	lsapi\\$(OUTPUT)\\png_support.o \
+	lsapi\\$(OUTPUT)\\lodepng.o
+
+# Libraries that lsapi_test_runner.exe uses
+TESTLIBS = -lgdi32 -luser32 -lkernel32 -ladvapi32 -lshell32 -lshlwapi -static-libstdc++ -static-libgcc
+
 #-----------------------------------------------------------------------------
 # Rules
 #-----------------------------------------------------------------------------
 
 # all targets (default)
 .PHONY: all
-all: setup $(DLL) $(HOOKDLL) $(EXE)
+all: setup $(DLL) $(HOOKDLL) $(EXE) $(TESTEXE)
 
 # litestep.exe
 $(EXE): setup $(UTILOBJS) $(EXEOBJS) $(EXERES)
@@ -195,6 +210,10 @@ $(HOOKDLL): setup $(HOOKDLLOBJS) $(HOOKDLLRES)
 	$(DLLTOOL) --add-stdcall-underscore -e $(HOOKDLLEXP) -l $(HOOKDLLIMPLIB) -D $(HOOKDLL) $(HOOKDLLOBJS) $(HOOKDLLRES)
 	$(CXX) $(HOOKDLLEXP) $(LDFLAGS) -nodefaultlibs -nostartfiles -shared -Wl,--subsystem,console,-Map,$(HOOKDLLMAP),-entry=__DllMainCRTStartup@12 -o $(HOOKDLL) $(HOOKDLLOBJS) $(HOOKDLLRES) $(HOOKDLLLIBS)
 
+# lsapi_test_runner.exe
+$(TESTEXE): setup $(UTILOBJS) $(TESTOBJS)
+	$(CXX) $(LDFLAGS) -Wl,-Map,$(TESTEXEMAP) -o $(TESTEXE) $(UTILOBJS) $(TESTOBJS) $(TESTLIBS)
+
 # Setup environment
 .PHONY: setup
 setup:
@@ -209,7 +228,7 @@ setup:
 clean:
 	@echo Cleaning output files
 	@echo  $(OUTPUT)\ ...
-	@-$(RM) $(EXE) $(EXEMAP) $(DLL) $(DLLMAP) $(DLLEXP) $(DLLIMPLIB) $(HOOKDLL) $(HOOKDLLMAP) $(HOOKDLLEXP) $(HOOKDLLIMPLIB)
+	@-$(RM) $(EXE) $(EXEMAP) $(DLL) $(DLLMAP) $(DLLEXP) $(DLLIMPLIB) $(HOOKDLL) $(HOOKDLLMAP) $(HOOKDLLEXP) $(HOOKDLLIMPLIB) $(TESTEXE) $(TESTEXEMAP)
 	@echo Cleaning intermediate files
 	@echo  litestep\$(OUTPUT)\ ...
 	@-$(RM) litestep\$(OUTPUT)\*.o litestep\$(OUTPUT)\*.d $(EXERES)
@@ -234,16 +253,16 @@ $(HOOKDLLRES): $(HOOKDLLRESFILES)
 	$(RC) -Ihook $(RCFLAGS) -o $@ $<
 
 # Pattern rule to compile cpp files
-utility\$(OUTPUT)\\%.o: utility\%.cpp
+utility\$(OUTPUT)\\%.o: utility\\%.cpp
 	$(CXX) $(CXXFLAGS) -MMD -c -o $@ $<
 
-hook\$(OUTPUT)\\%.o: hook\%.cpp
+hook\$(OUTPUT)\\%.o: hook\\%.cpp
 	$(CXX) $(CXXFLAGS) -MMD -c -o $@ $<
 
-lsapi\$(OUTPUT)\\%.o: lsapi\%.cpp
+lsapi\$(OUTPUT)\\%.o: lsapi\\%.cpp
 	$(CXX) $(CXXFLAGS) -MMD -DLSAPI_PRIVATE -DLSAPI_INTERNAL -c -o $@ $<
 
-litestep\$(OUTPUT)\\%.o: litestep\%.cpp
+litestep\$(OUTPUT)\\%.o: litestep\\%.cpp
 	$(CXX) $(CXXFLAGS) -MMD -DLSAPI_PRIVATE -c -o $@ $<
 
 #-----------------------------------------------------------------------------
@@ -253,3 +272,4 @@ litestep\$(OUTPUT)\\%.o: litestep\%.cpp
 -include $(DLLOBJS:.o=.d)
 -include $(HOOKDLLOBJS:.o=.d)
 -include $(UTILOBJS:.o=.d)
+-include $(TESTOBJS:.o=.d) # Added dependency include for test objects

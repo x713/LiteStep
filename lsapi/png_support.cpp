@@ -1,213 +1,265 @@
-/*
-This is a part of the LiteStep Shell Source code.
+#include "png_support.h" // Should be the first include
+#include "lodepng.h"       // For LodePNG functions
+#include <windows.h>       // For HBITMAP, BITMAPINFO, GetObject, DeleteObject, MultiByteToWideChar, DeleteFileA etc.
+#include <vector>          // For std::vector
+#include <fstream>         // For std::ifstream
+#include <algorithm>       // For std::swap
+#include <string>          // For std::string
+#include <iostream>        // For std::cout in RunPNGLoadTest
 
-Copyright (C) 1997-2005 The LiteStep Development Team
+// Make sure common.h (via png_support.h) or other headers provide
+// necessary types like LPCWSTR if not already included by windows.h
 
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
+// Renamed from LoadFromPNG
+HBITMAP lspng_load_file(LPCWSTR pwszFilename) {
+    std::vector<unsigned char> png_file_buffer;
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-*/
-/****************************************************************************
-****************************************************************************/
-#include <png.h>
-#include "png_support.h"
-#include "../utility/safeptr.h"
-#include "../utility/common.h"
-
-
-typedef struct _PNGERROR
-{
-  HWND Wnd;
-  jmp_buf ErrorJump;
-}
-PNGERROR, * PPNGERROR;
-
-//void PNGErrorHandler(png_structp PngStruct, wchar_t* Message)
-void PNGErrorHandler(png_structp PngStruct, png_const_charp Message)
-{
-  PPNGERROR PngError = reinterpret_cast<PPNGERROR>(png_get_error_ptr(PngStruct));
-
-  if (!PngError)
-    throw Message;
-  else
-  {
-    MessageBox(PngError->Wnd, ConvertStringToWstring(Message).c_str(), L"LiteStep::LoadFromPNG:PngError", MB_OK | MB_ICONERROR);
-    longjmp(PngError->ErrorJump, 1);
-  }
-}
-
-
-
-png_voidp ls_png_malloc(png_structp /* png_ptr */, png_size_t size)
-{
-  return malloc(size);
-}
-
-
-
-
-void ls_png_free(png_structp /* png_ptr */, png_voidp ptr)
-{
-  free(ptr);
-}
-
-
-
-
-void ls_png_read_data(png_structp png_ptr, png_bytep data, png_size_t length)
-{
-  FILE* file = (FILE*)png_get_io_ptr(png_ptr);
-  ASSERT(file); // if libpng calls this function, this mustn't be empty
-
-  fread(data, 1, length, file);
-}
-
-
-//
-// In order to avoid CRT mismatches, we override all CRT functions libpng uses
-// with our own. The alternative, using fopen and fread in our code and then
-// passing a FILE* into libpng, isn't reliable because it crashes if libpng was
-// compiled with a different CRT than lsapi.dll
-//
-HBITMAP LoadFromPNG(LPCWSTR pwszFilename)
-{
-  HBITMAP hDibSection = NULL;
-
-  if (IsValidStringPtr(pwszFilename))
-  {
-    FILE* hFile; // Note: No initialization here
-    //FILE * hFile = _wfopen(pwszFilename, L"rb");
-    errno_t err = _wfopen_s(&hFile, pwszFilename, L"rb"); // Use _wfopen_s
-
-    if (err == 0) 
-    { // Check for errors!
-
-      // File opened successfully. Use hFile.
-      // ... your code to read from the file ...
-      const size_t num_sig_bytes = 8;
-      unsigned char sig[num_sig_bytes];
-      fread(sig, 1, num_sig_bytes, hFile);
-
-      int is_png = png_check_sig(sig, num_sig_bytes);
-      if (is_png)
-      {
-        PNGERROR PngError = { GetForegroundWindow() };
-
-        png_structp Read = png_create_read_struct_2(PNG_LIBPNG_VER_STRING,
-          &PngError, PNGErrorHandler, NULL,
-          NULL, ls_png_malloc, ls_png_free);
-
-        if (Read)
-        {
-          png_infop Info = png_create_info_struct(Read);
-          if (Info)
-          {
-            if (!setjmp(PngError.ErrorJump))
-            {
-              png_set_read_fn(Read, hFile, ls_png_read_data);
-              png_set_sig_bytes(Read, num_sig_bytes);
-              png_read_info(Read, Info);
-
-              const unsigned char bit_depth = png_get_bit_depth(Read, Info);
-              const unsigned char color_type = png_get_color_type(Read, Info);
-
-              if (color_type == PNG_COLOR_TYPE_PALETTE)
-              {
-                png_set_palette_to_rgb(Read);
-              }
-
-              if ((color_type == PNG_COLOR_TYPE_GRAY) || (color_type == PNG_COLOR_TYPE_GRAY_ALPHA))
-              {
-                if (bit_depth < 8)
-                {
-                  //png_set_gray_1_2_4_to_8(Read);
-                  png_set_expand_gray_1_2_4_to_8(Read);
-                }
-                png_set_gray_to_rgb(Read);
-              }
-
-              if (png_get_valid(Read, Info, PNG_INFO_tRNS))
-              {
-                png_set_tRNS_to_alpha(Read);
-              }
-
-              if (color_type & PNG_COLOR_MASK_COLOR)
-              {
-                png_set_bgr(Read);
-              }
-
-              if (bit_depth == 16)
-              {
-                png_set_strip_16(Read);
-              }
-
-              double image_gamma = 1 / 2.2;
-              png_get_gAMA(Read, Info, &image_gamma);
-              png_set_gamma(Read, 2.2, image_gamma);
-
-              const int num_passes = png_set_interlace_handling(Read);
-
-              png_read_update_info(Read, Info);
-
-              BITMAPINFO bmi = { 0 };
-              bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-              bmi.bmiHeader.biWidth = (LONG)png_get_image_width(Read, Info);
-              bmi.bmiHeader.biHeight = -(LONG)png_get_image_height(Read, Info);
-              bmi.bmiHeader.biBitCount = (WORD)(png_get_channels(Read, Info) * png_get_bit_depth(Read, Info));
-              bmi.bmiHeader.biPlanes = 1;
-              bmi.bmiHeader.biCompression = BI_RGB;
-
-              unsigned char* Bits;
-              hDibSection = CreateDIBSection(NULL, &bmi, 0, reinterpret_cast<LPVOID*>(&Bits), NULL, 0);
-              if (!Bits)
-              {
-                longjmp(PngError.ErrorJump, 1);
-              }
-
-              unsigned int dib_bytes_per_scanline = (((bmi.bmiHeader.biWidth * bmi.bmiHeader.biBitCount) + 31) & ~31) >> 3;
-
-              for (int Pass = 0; Pass < num_passes; Pass++)
-              {
-                for (int y = 0; y < -bmi.bmiHeader.biHeight; y++)
-                {
-                  unsigned char* Scanline = reinterpret_cast<unsigned char*>(Bits + (y * dib_bytes_per_scanline));
-                  png_read_row(Read, Scanline, NULL);
-                }
-              }
-
-              png_read_end(Read, Info);
-
-              png_destroy_read_struct(&Read, &Info, NULL);
-            }
-            else
-            {
-              png_destroy_read_struct(&Read, &Info, NULL);
-            }
-          }
-          else
-          {
-            png_destroy_read_struct(&Read, NULL, NULL);
-          }
-        }
-      }
-
-      fclose(hFile);
-    } else {
-      // Handle the error.  err will contain the error code.
-      //fwprintf(stderr, L"Error opening file: %s\n", pwszFilename); // Example error message
-      // ... other error handling ...
+    std::ifstream file_stream(pwszFilename, std::ios::binary);
+    if (!file_stream.is_open()) {
+        return NULL;
     }
-  }
 
-  return hDibSection;
+    file_stream.seekg(0, std::ios::end);
+    std::streamsize file_size = file_stream.tellg();
+    file_stream.seekg(0, std::ios::beg);
+
+    if (file_size <= 0) {
+        file_stream.close();
+        return NULL;
+    }
+
+    png_file_buffer.resize(static_cast<size_t>(file_size));
+    if (!file_stream.read(reinterpret_cast<char*>(png_file_buffer.data()), file_size)) {
+        file_stream.close();
+        return NULL;
+    }
+    file_stream.close();
+
+    if (png_file_buffer.empty()) {
+        return NULL;
+    }
+
+    std::vector<unsigned char> image_data;
+    unsigned int width, height;
+
+    unsigned error = lodepng::decode(image_data, width, height, png_file_buffer.data(), png_file_buffer.size(), LCT_RGBA, 8);
+
+    if (error) {
+        // OutputDebugStringA(lodepng_error_text(error));
+        return NULL;
+    }
+
+    if (width == 0 || height == 0 || image_data.empty()) {
+        return NULL;
+    }
+
+    for (size_t i = 0; i < image_data.size(); i += 4) {
+        std::swap(image_data[i], image_data[i + 2]); // Swap R and B for BGRA
+    }
+
+    BITMAPINFO bmi = {0};
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmi.bmiHeader.biWidth = width;
+    bmi.bmiHeader.biHeight = -static_cast<LONG>(height);
+    bmi.bmiHeader.biPlanes = 1;
+    bmi.bmiHeader.biBitCount = 32;
+    bmi.bmiHeader.biCompression = BI_RGB;
+
+    unsigned char* pPixels = nullptr;
+    HBITMAP hBitmap = CreateDIBSection(
+        NULL, &bmi, DIB_RGB_COLORS,
+        reinterpret_cast<void**>(&pPixels),
+        NULL, 0);
+
+    if (!hBitmap || !pPixels) {
+        return NULL;
+    }
+
+    int dib_stride = ((width * bmi.bmiHeader.biBitCount + 31) & ~31) >> 3;
+    int image_pixel_stride = width * 4;
+
+    for (unsigned int y = 0; y < height; ++y) {
+        memcpy(pPixels + (y * dib_stride), image_data.data() + (y * image_pixel_stride), image_pixel_stride);
+    }
+    
+    return hBitmap;
+}
+
+bool lspng_save_file(const std::string& filename, const unsigned char* image_data, unsigned int width, unsigned int height, bool input_is_bgra) {
+    if (!image_data || width == 0 || height == 0) {
+        return false;
+    }
+
+    unsigned error;
+    if (input_is_bgra) {
+        std::vector<unsigned char> rgba_data(width * height * 4);
+        for (size_t i = 0; i < width * height * 4; i += 4) {
+            rgba_data[i + 0] = image_data[i + 2]; // R
+            rgba_data[i + 1] = image_data[i + 1]; // G
+            rgba_data[i + 2] = image_data[i + 0]; // B
+            rgba_data[i + 3] = image_data[i + 3]; // A
+        }
+        error = lodepng::encode(filename, rgba_data, width, height, LCT_RGBA, 8);
+    } else {
+        error = lodepng::encode(filename, image_data, width, height, LCT_RGBA, 8);
+    }
+
+    return error == 0;
+}
+
+// --- Test-related Function Implementations ---
+
+// Helper function to convert std::string to std::wstring for Windows API calls
+#if defined(_WIN32)
+static std::wstring ConvertStringToWstring(const std::string& str) {
+    if (str.empty()) return std::wstring();
+    int size_needed = MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), NULL, 0);
+    std::wstring wstrTo(size_needed, 0);
+    MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), &wstrTo[0], size_needed);
+    return wstrTo;
+}
+#endif
+
+static bool GenerateTestPatternData(std::vector<unsigned char>& image_data, unsigned int width, unsigned int height) {
+    if (width == 0 || height == 0) {
+        return false;
+    }
+
+    image_data.assign(width * height * 4, 255); // Initialize to white (255,255,255,255) RGBA
+
+    // Draw black diagonal cross (RGBA: 0,0,0,255)
+    for (unsigned int i = 0; i < width && i < height; ++i) {
+        // Top-left to bottom-right
+        size_t index1 = (i * width + i) * 4;
+        image_data[index1 + 0] = 0;   // R
+        image_data[index1 + 1] = 0;   // G
+        image_data[index1 + 2] = 0;   // B
+        image_data[index1 + 3] = 255; // A
+
+        // Top-right to bottom-left
+        if (width > i) { // Ensure x coordinate (width - 1 - i) is valid
+             size_t index2 = (i * width + (width - 1 - i)) * 4;
+             image_data[index2 + 0] = 0;   // R
+             image_data[index2 + 1] = 0;   // G
+             image_data[index2 + 2] = 0;   // B
+             image_data[index2 + 3] = 255; // A
+        }
+    }
+    return true;
+}
+
+static bool CheckPixelBGRA(const unsigned char* pixel_data, unsigned int x, unsigned int y, unsigned int dib_width, 
+                           unsigned char b, unsigned char g, unsigned char r, unsigned char a, const std::string& pixel_name) {
+    size_t offset = (y * dib_width + x) * 4; 
+    bool match = (pixel_data[offset + 0] == b &&
+                  pixel_data[offset + 1] == g &&
+                  pixel_data[offset + 2] == r &&
+                  pixel_data[offset + 3] == a);
+    if (!match) {
+        std::cout << "FAIL: " << pixel_name << " at (" << x << "," << y << ") - Expected (B:" << (int)b << ",G:" << (int)g << ",R:" << (int)r << ",A:" << (int)a 
+                  << ") Got (B:" << (int)pixel_data[offset + 0] << ",G:" << (int)pixel_data[offset + 1] << ",R:" << (int)pixel_data[offset + 2] << ",A:" << (int)pixel_data[offset + 3] << ")" << std::endl;
+    } else {
+         std::cout << "PASS: " << pixel_name << " at (" << x << "," << y << ")" << std::endl;
+    }
+    return match;
+}
+
+bool RunPNGLoadTest() {
+    const std::string test_filename = "test_pattern.png";
+    const unsigned int test_width = 100;
+    const unsigned int test_height = 100;
+    bool all_tests_passed = true;
+
+    std::cout << "Starting PNG Load Test (using lspng_ wrappers)..." << std::endl;
+
+    std::vector<unsigned char> generated_image_data;
+    if (!GenerateTestPatternData(generated_image_data, test_width, test_height)) {
+        std::cout << "FAIL: GenerateTestPatternData failed." << std::endl;
+        return false;
+    }
+    std::cout << "INFO: Test pattern data generated." << std::endl;
+
+    if (!lspng_save_file(test_filename, generated_image_data.data(), test_width, test_height, false /*is_bgra=false*/)) {
+        std::cout << "FAIL: lspng_save_file failed to create " << test_filename << std::endl;
+        return false;
+    }
+    std::cout << "INFO: " << test_filename << " created successfully via lspng_save_file." << std::endl;
+
+#if defined(_WIN32)
+    std::wstring wide_test_filename = ConvertStringToWstring(test_filename); 
+    HBITMAP hBitmap = lspng_load_file(wide_test_filename.c_str());
+#else
+    HBITMAP hBitmap = nullptr; 
+    std::cout << "WARN: lspng_load_file test is Windows-specific (HBITMAP)." << std::endl;
+    all_tests_passed = false; 
+#endif
+
+    if (!hBitmap && all_tests_passed) {
+        std::cout << "FAIL: lspng_load_file failed to load " << test_filename << std::endl;
+        DeleteFileA(test_filename.c_str()); 
+        return false;
+    }
+    if(hBitmap) std::cout << "INFO: " << test_filename << " loaded into HBITMAP via lspng_load_file." << std::endl;
+
+    BITMAP bmp;
+    if (hBitmap && GetObject(hBitmap, sizeof(BITMAP), &bmp) == 0) {
+        std::cout << "FAIL: GetObject failed for HBITMAP." << std::endl;
+        all_tests_passed = false;
+    }
+
+    if (hBitmap && all_tests_passed) {
+        if (static_cast<unsigned int>(bmp.bmWidth) != test_width || static_cast<unsigned int>(abs(bmp.bmHeight)) != test_height) {
+            std::cout << "FAIL: Bitmap dimensions mismatch. Got " << bmp.bmWidth << "x" << abs(bmp.bmHeight) 
+                      << ", expected " << test_width << "x" << test_height << std::endl;
+            all_tests_passed = false;
+        } else {
+            std::cout << "INFO: Bitmap dimensions match." << std::endl;
+        }
+        
+        if (bmp.bmBitsPixel != 32) {
+             std::cout << "FAIL: Expected 32 bits per pixel, got " << bmp.bmBitsPixel << std::endl;
+             all_tests_passed = false;
+        }
+
+        if (all_tests_passed && bmp.bmBits && bmp.bmWidth > 0 && abs(bmp.bmHeight) > 0) {
+            unsigned char* pixel_data_from_dib = static_cast<unsigned char*>(bmp.bmBits);
+            unsigned int dib_actual_width = bmp.bmWidth;
+
+            if (!CheckPixelBGRA(pixel_data_from_dib, 0, 0, dib_actual_width, 0,0,0,255, "Top-left (0,0) - BGRA")) all_tests_passed = false;
+            if (test_width > 1) {
+                if (!CheckPixelBGRA(pixel_data_from_dib, 1, 0, dib_actual_width, 255,255,255,255, "Near top-left (1,0) - BGRA")) all_tests_passed = false;
+            }
+            if (test_height > 1) {
+                 if (!CheckPixelBGRA(pixel_data_from_dib, 0, 1, dib_actual_width, 255,255,255,255, "Near top-left (0,1) - BGRA")) all_tests_passed = false;
+            }
+            unsigned int cx = test_width / 2;
+            unsigned int cy = test_height / 2;
+            if (!CheckPixelBGRA(pixel_data_from_dib, cx, cy, dib_actual_width, 0,0,0,255, "Center (cx,cy) - BGRA")) all_tests_passed = false;
+            if (test_width > cx + 1) {
+                 if (!CheckPixelBGRA(pixel_data_from_dib, cx + 1, cy, dib_actual_width, 255,255,255,255, "Near Center (cx+1,cy) - BGRA")) all_tests_passed = false;
+            }
+            if (test_width > 0 && test_height > 0) {
+                 if (!CheckPixelBGRA(pixel_data_from_dib, test_width - 1, test_height - 1, dib_actual_width, 0,0,0,255, "Bottom-right - BGRA")) all_tests_passed = false;
+            }
+        } else if (all_tests_passed) {
+            std::cout << "FAIL: Could not access pixel data or dimensions were zero for loaded HBITMAP." << std::endl;
+            all_tests_passed = false;
+        }
+    }
+
+    if(hBitmap) DeleteObject(hBitmap);
+    if (std::ifstream(test_filename).good()) { // Check if file exists before attempting to delete
+        if (!DeleteFileA(test_filename.c_str())) {
+            std::cout << "WARN: Failed to delete " << test_filename << " after test." << std::endl;
+        }
+    }
+
+
+    if (all_tests_passed) {
+        std::cout << "SUCCESS: All PNG wrapper and load checks passed." << std::endl;
+    } else {
+        std::cout << "FAILURE: Some PNG wrapper and load checks failed." << std::endl;
+    }
+    
+    return all_tests_passed;
 }
