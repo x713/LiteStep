@@ -26,7 +26,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 /**
- * Flags for {@link MathEvaluateBool} and {@link MathEvaluateString}.
+ * @file MathEvaluate.h
+ * @brief Provides functions for evaluating mathematical expressions.
+ *
+ * This file contains functions for evaluating mathematical expressions
+ * and converting the results to various types.
+ */
+
+/**
+ * @brief Flags for controlling the evaluation of math expressions.
  */
 enum
 {
@@ -38,14 +46,33 @@ enum
 
 
 /**
- * Evaluates a math expression and converts the result to a Boolean.
+ * @brief Evaluates a math expression and converts the result to a Boolean.
  *
- * @param  context    map with variable bindings
- * @param  expression string with expression to evaluate
- * @param  result     variable to hold expression result
- * @param  flags      flags that control parsing and evaluation
- * @return <code>true</code>  if successful or
- *         <code>false</code> if an error occured
+ * This function parses and evaluates a mathematical expression and returns
+ * the result as a boolean value.
+ *
+ * @param context The context containing variable bindings for the expression.
+ * @param expression The mathematical expression to evaluate.
+ * @param result A reference to a boolean variable that will hold the result.
+ * @param flags Flags that control the parsing and evaluation process.
+ * @return `true` if the expression was evaluated successfully, `false` otherwise.
+ */
+bool MathEvaluateBool(const SettingsMap& context,
+    const std::wstring& expression,
+    bool& result,
+    unsigned int flags = 0);
+
+/**
+ * @brief Evaluates a math expression and converts the result to a string.
+ *
+ * This function parses and evaluates a mathematical expression and returns
+ * the result as a string.
+ *
+ * @param context The context containing variable bindings for the expression.
+ * @param expression The mathematical expression to evaluate.
+ * @param result A reference to a boolean variable that will hold the result.
+ * @param flags Flags that control the parsing and evaluation process.
+ * @return `true` if the expression was evaluated successfully, `false` otherwise.
  */
 bool MathEvaluateBool(const SettingsMap& context,
     const std::wstring& expression,

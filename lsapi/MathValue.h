@@ -26,14 +26,21 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 /**
- * Result of evaluating a math expression.
+ * @file MathValue.h
+ * @brief Provides a class for representing values in the math parser.
+ */
+
+/**
+ * @brief Represents the result of evaluating a math expression.
+ *
+ * A MathValue can be one of four types: UNDEFINED, BOOLEAN, NUMBER, or STRING.
  */
 class MathValue
 {
 public:
 
     /**
-     * Types
+     * @brief The types of values that a MathValue can hold.
      */
     enum
     {
@@ -42,115 +49,140 @@ public:
         NUMBER,
         STRING
     };
-    
+
 public:
 
     /**
-     * Constructs an undefined value.
+     * @brief Constructs an undefined value.
      */
     MathValue();
-    
+
     /**
-     * Constructs a Boolean value.
+     * @brief Constructs a Boolean value.
+     * @param value The boolean value.
      */
     MathValue(bool value);
-    
+
     /**
-     * Constructs a numeric value from an integer.
+     * @brief Constructs a numeric value from an integer.
+     * @param value The integer value.
      */
     MathValue(int value);
-    
+
     /**
-     * Constructs a numeric value from a floating point number.
+     * @brief Constructs a numeric value from a floating point number.
+     * @param value The floating point value.
      */
     MathValue(double value);
-    
+
     /**
-     * Constructs a string value.
+     * @brief Constructs a string value.
+     * @param value The string value.
      */
     MathValue(const std::wstring& value);
-    
+
     /**
-     * Constructs a string value.
+     * @brief Constructs a string value.
+     * @param value The string value.
      */
     MathValue(const wchar_t *value);
-    
+
     /**
-     * Assigns a Boolean to this value.
+     * @brief Assigns a Boolean to this value.
+     * @param value The boolean value to assign.
+     * @return A reference to this MathValue.
      */
     MathValue& operator=(bool value);
-    
+
     /**
-     * Assigns an integer to this value.
+     * @brief Assigns an integer to this value.
+     * @param value The integer value to assign.
+     * @return A reference to this MathValue.
      */
     MathValue& operator=(int value);
-    
+
     /**
-     * Assigns a floating point number to this value.
+     * @brief Assigns a floating point number to this value.
+     * @param value The floating point value to assign.
+     * @return A reference to this MathValue.
      */
     MathValue& operator=(double value);
-    
+
     /**
-     * Assigns a string to this value.
+     * @brief Assigns a string to this value.
+     * @param value The string value to assign.
+     * @return A reference to this MathValue.
      */
     MathValue& operator=(const std::wstring& value);
-    
+
     /**
-     * Assigns a string to this value.
+     * @brief Assigns a string to this value.
+     * @param value The string value to assign.
+     * @return A reference to this MathValue.
      */
     MathValue& operator=(const wchar_t *value);
-    
+
     /**
-     * Returns a string description of this value's type.
+     * @brief Returns a string description of this value's type.
+     * @return A string description of the value's type.
      */
     std::wstring GetTypeName() const;
-    
+
     /**
-     * Returns <code>true</code> if this value is undefined.
+     * @brief Returns <code>true</code> if this value is undefined.
+     * @return <code>true</code> if the value is undefined, <code>false</code> otherwise.
      */
     bool IsUndefined() const { return (mType == UNDEFINED); }
-    
+
     /**
-     * Returns <code>true</code> if this value is a Boolean.
+     * @brief Returns <code>true</code> if this value is a Boolean.
+     * @return <code>true</code> if the value is a Boolean, <code>false</code> otherwise.
      */
     bool IsBoolean() const { return (mType == BOOLEAN); }
-    
+
     /**
-     * Returns <code>true</code> if this value is a number.
+     * @brief Returns <code>true</code> if this value is a number.
+     * @return <code>true</code> if the value is a number, <code>false</code> otherwise.
      */
     bool IsNumber() const { return (mType == NUMBER); }
-    
+
     /**
-     * Returns <code>true</code> if this value is a string.
+     * @brief Returns <code>true</code> if this value is a string.
+     * @return <code>true</code> if the value is a string, <code>false</code> otherwise.
      */
     bool IsString() const { return (mType == STRING); }
-    
+
     /**
-     * Converts this value to a Boolean.
+     * @brief Converts this value to a Boolean.
+     * @return The value as a Boolean.
      */
     bool ToBoolean() const;
-    
+
     /**
-     * Converts this value to an integer.
+     * @brief Converts this value to an integer.
+     * @return The value as an integer.
      */
     int ToInteger() const;
-    
+
     /**
-     * Converts this value to a number.
+     * @brief Converts this value to a number.
+     * @return The value as a number.
      */
     double ToNumber() const;
-    
+
     /**
-     * Converts this value to a string.
+     * @brief Converts this value to a string.
+     * @return The value as a string.
      */
     std::wstring ToString() const;
-    
+
     /**
-     * Converts this value to a string using integer representation
+     * @brief Converts this value to a string using integer representation
      * for any NUMBER type.
+     * @return The value as a string.
      */
     std::wstring ToCompatibleString() const;
-    
+
     /** Operators */
     friend MathValue operator+ (const MathValue& a, const MathValue& b);
     friend MathValue operator+ (const MathValue& a);
@@ -168,18 +200,18 @@ public:
     friend MathValue operator<=(const MathValue& a, const MathValue& b);
     friend MathValue operator> (const MathValue& a, const MathValue& b);
     friend MathValue operator>=(const MathValue& a, const MathValue& b);
-    
+
 private:
 
     /** Type */
     int mType;
-    
+
     /** Boolean value */
     bool mBoolean;
-    
+
     /** Numeric value */
     double mNumber;
-    
+
     /** String value */
     std::wstring mString;
 };

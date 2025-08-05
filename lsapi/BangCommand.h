@@ -21,8 +21,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #ifndef __BANG_H
 #define __BANG_H
-#include "../utility/common.h"
-#include "../utility/base.h"
+#include "utility/common.h"
+#include "utility/base.h"
 #include <string>
 
 class Bang: public CountedBase

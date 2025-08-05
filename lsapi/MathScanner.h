@@ -27,22 +27,32 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 /**
- * Lexical analyzer for math expressions.
+ * @file MathScanner.h
+ * @brief Provides a lexical analyzer for mathematical expressions.
+ */
+
+/**
+ * @brief Lexical analyzer for math expressions.
+ *
+ * This class takes a string containing a mathematical expression and breaks it
+ * down into a series of tokens.
  */
 class MathScanner
 {
 public:
 
     /**
-     * Constructs a MathScanner that reads from the specified string.
+     * @brief Constructs a MathScanner that reads from the specified string.
+     * @param expression The mathematical expression to scan.
      */
     MathScanner(const std::wstring& expression);
-    
+
     /**
-     * Extracts the next token from the input and returns it.
+     * @brief Extracts the next token from the input and returns it.
+     * @return The next token in the expression.
      */
     MathToken NextToken();
-    
+
 private:
 
     /**
@@ -50,29 +60,29 @@ private:
      * its a reserved word.
      */
     MathToken CheckReservedWord(const std::wstring& identifier);
-    
+
     /**
      * Read the next <code>count</code> characters from the input.
      */
     void Next(int count = 1);
-    
+
     /**
      * Scans an identifier.
      */
     MathToken ScanIdentifier();
-    
+
     /**
      * Scans a numeric literal.
      */
     MathToken ScanNumber();
-    
+
     /**
      * Scans a string literal.
      */
     MathToken ScanString();
 
 private:
-    
+
     /**
      * Skips past white space in the input.
      */
@@ -82,31 +92,31 @@ private:
      * Returns true if a character is a digit.
      */
     static bool IsDigit(wchar_t ch);
-    
+
     /**
      * Returns true if a character can appear as the first character in an
      * identifier (name).
      */
     static bool IsFirstNameChar(wchar_t ch);
-    
+
     /**
      * Returns true if a character can appear in an identifier (name).
      */
     static bool IsNameChar(wchar_t ch);
-    
+
     /**
      * Returns true if a character is a space character.
      */
     static bool IsSpace(wchar_t ch);
-    
+
 private:
 
     /** Number of characters of lookahead */
     enum { LOOKAHEAD = 2 };
-    
+
     /** Character buffer */
     wchar_t mLookahead[LOOKAHEAD];
-    
+
     /** Input stream */
     std::wistringstream mStream;
 };

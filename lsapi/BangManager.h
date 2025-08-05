@@ -22,10 +22,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __BANGMANAGER_H
 #define __BANGMANAGER_H
 
-#include "../utility/common.h"
-#include "../lsapi/BangCommand.h"
-#include "../utility/criticalsection.h"
-#include "../utility/stringutility.h"
+#include "utility/common.h"
+#include "lsapi/BangCommand.h"
+#include "utility/criticalsection.h"
+#include "utility/stringutility.h"
 #include <map>
 #include <string>
 

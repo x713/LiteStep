@@ -25,7 +25,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 /**
- * Token types for {@link MathToken}.
+ * @file MathToken.h
+ * @brief Provides a token class for the math parser.
+ */
+
+/**
+ * @brief Token types for the math parser.
  */
 enum
 {
@@ -62,57 +67,67 @@ enum
 
 
 /**
- * Token in a math expression.
+ * @brief Represents a token in a math expression.
+ *
+ * A token has a type and a lexical value.
  */
 class MathToken
 {
 public:
 
     /**
-     * Constructs a token with type <code>TT_INVALID</code>.
+     * @brief Constructs a token with type <code>TT_INVALID</code>.
      */
     MathToken();
-    
+
     /**
-     * Constructs a token with the specified type.
+     * @brief Constructs a token with the specified type.
+     * @param type The type of the token.
      */
     MathToken(int type);
-    
+
     /**
-     * Constructs a token with the specified type and lexical value.
+     * @brief Constructs a token with the specified type and lexical value.
+     * @param type The type of the token.
+     * @param value The lexical value of the token.
      */
     MathToken(int type, const std::wstring& value);
-    
+
     /**
-     * Returns the type of this token.
+     * @brief Returns the type of this token.
+     * @return The type of the token.
      */
     int GetType() const { return mType; }
-    
+
     /**
-     * Returns a string description of this token's type.
+     * @brief Returns a string description of this token's type.
+     * @return A string description of the token's type.
      */
     std::wstring GetTypeName() const;
-    
+
     /**
-     * Sets the type of this token.
+     * @brief Sets the type of this token.
+     * @param type The new type of the token.
      */
     void SetType(int type);
-    
+
     /**
-     * Returns the lexical value of this token.
+     * @brief Returns the lexical value of this token.
+     * @return The lexical value of the token.
      */
     std::wstring GetValue() const { return mValue; }
-    
+
     /**
-     * Sets the lexical value of this token.
+     * @brief Sets the lexical value of this token.
+     * @param value The new lexical value of the token.
      */
     void SetValue(const std::wstring& value);
-    
+
 private:
 
     /** Token type */
     int mType;
-    
+
     /** Lexical value */
     std::wstring mValue;
 };

@@ -21,8 +21,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __SETTINGSMANAGER_H
 #define __SETTINGSMANAGER_H
 
-#include "../utility/common.h"
-#include "../utility/criticalsection.h"
+#include "utility/common.h"
+#include "utility/criticalsection.h"
 #include <string>
 #include <map>
 #include <set>

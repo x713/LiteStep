@@ -29,117 +29,139 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "SettingsDefines.h"
 
 
-/** Vector of {@link MathValue} */
+/**
+ * @file MathParser.h
+ * @brief Provides a parser and evaluator for mathematical expressions.
+ */
+
+/**
+ * @brief A list of MathValue objects.
+ */
 typedef std::vector<MathValue> MathValueList;
 
 
 /**
- * Parser and evaluator for math expressions.
+ * @brief Parser and evaluator for math expressions.
+ *
+ * This class takes a string containing a mathematical expression and evaluates it.
+ * It supports variables, basic arithmetic operations, and functions.
  */
 class MathParser
 {
 public:
 
     /**
-     * Constructor.
+     * @brief Constructs a new MathParser object.
+     *
+     * @param context The context containing variable bindings for the expression.
+     * @param expression The mathematical expression to evaluate.
+     * @param recursiveVarSet A set of variables to check for recursive definitions.
+     * @param flags Flags that control the parsing and evaluation process.
      */
     MathParser(const SettingsMap& context, const std::wstring& expression,
         const StringSet& recursiveVarSet, unsigned int flags = 0);
-    
+
     /**
-     * Parses and evaluates a math expression.
+     * @brief Parses and evaluates the math expression.
+     *
+     * @return A MathValue object containing the result of the evaluation.
      */
     MathValue Evaluate();
-    
+
 protected:
 
     /**
-     * Calls a function with the specified arguments and returns the result.
+     * @brief Calls a function with the specified arguments and returns the result.
+     * @param name The name of the function to call.
+     * @param argList A list of arguments to pass to the function.
+     * @return A MathValue object containing the result of the function call.
      */
     MathValue CallFunction(const std::wstring& name, const MathValueList& argList) const;
-    
+
     /**
-     * Returns the value of a variable.
+     * @brief Returns the value of a variable.
+     * @param name The name of the variable to retrieve.
+     * @return A MathValue object containing the value of the variable.
      */
     MathValue GetVariable(const std::wstring& name) const;
-    
+
 private:
 
     /**
      * Parses and evaluates a primary expression.
      */
     MathValue ParsePrimaryExpression();
-    
+
     /**
      * Parses and evaluates a unary expression.
      */
     MathValue ParseUnaryExpression();
-    
+
     /**
      * Parses and evaluates a multiplicative expression.
      */
     MathValue ParseMultiplicativeExpression();
-    
+
     /**
      * Parses and evaluates an additive expression.
      */
     MathValue ParseAdditiveExpression();
-    
+
     /**
      * Parses and evaluates a concatenation expression.
      */
     MathValue ParseConcatenationExpression();
-    
+
     /**
      * Parses and evaluates a relational expression.
      */
     MathValue ParseRelationalExpression();
-    
+
     /**
      * Parses and evaluates a logical AND expression.
      */
     MathValue ParseLogicalANDExpression();
-    
+
     /**
      * Parses and evaluates a logical OR expression.
      */
     MathValue ParseLogicalORExpression();
-    
+
     /**
      * Parses and evaluates an expression.
      */
     MathValue ParseExpression();
-    
+
     /**
      * Parses and evaluates an expression list.
      */
     void ParseExpressionList(MathValueList& valueList);
-    
+
     /**
      * Consumes the current token if its type is <code>type</code>. Throws an
      * exception if the token does not match.
      */
     void Match(int type);
-    
+
     /**
      * Consumes the next <code>count</code> tokens.
      */
     void Next(int count = 1);
-    
+
 private:
-    
+
     /** Number of tokens of lookahead */
     enum { LOOKAHEAD = 2 };
-    
+
     /** Token buffer */
     MathToken mLookahead[LOOKAHEAD];
-    
+
     /** Variable bindings */
     const SettingsMap& mContext;
-    
+
     /** Lexical analyzer */
     MathScanner mScanner;
-    
+
     /** Set of variables to check for recursive definition */
     const StringSet& mRecursiveVarSet;
 

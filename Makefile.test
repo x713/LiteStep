@@ -1,0 +1,50 @@
+#-----------------------------------------------------------------------------
+# Makefile for LiteStep Tests (MinGW)
+#-----------------------------------------------------------------------------
+
+#-----------------------------------------------------------------------------
+# Tools and Flags
+#-----------------------------------------------------------------------------
+
+CXX = x86_64-w64-mingw32-g++
+CXXFLAGS = -Wall -I. -I./utility -I./lsapi
+LDFLAGS = -lshlwapi -static
+
+#-----------------------------------------------------------------------------
+# Files and Paths
+#-----------------------------------------------------------------------------
+
+TEST_OUTPUT = tests/bin
+TEST_EXE = $(TEST_OUTPUT)/test.exe
+
+TEST_SRCS = \
+	tests/test_runner.cpp \
+	tests/test_math.cpp \
+	lsapi/MathScanner.cpp \
+	lsapi/MathParser.cpp \
+	lsapi/MathValue.cpp \
+	lsapi/MathEvaluate.cpp \
+	lsapi/MathToken.cpp \
+	utility/safeptr.cpp \
+	utility/shellhlp.cpp \
+	utility/localization.cpp
+
+TEST_OBJS = $(patsubst %.cpp,%.o,$(TEST_SRCS))
+
+#-----------------------------------------------------------------------------
+# Rules
+#-----------------------------------------------------------------------------
+
+all: $(TEST_EXE)
+
+$(TEST_EXE): $(TEST_OBJS)
+	@mkdir -p $(TEST_OUTPUT)
+	$(CXX) -o $@ $^ $(LDFLAGS)
+
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+clean:
+	rm -f $(TEST_OBJS) $(TEST_EXE)
+
+.PHONY: all clean

@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #if !defined(MATHEXCEPTION_H)
 #define MATHEXCEPTION_H
 
-#include "../utility/common.h"
+#include "utility/common.h"
 #include <stdexcept>
 #include <string>
 

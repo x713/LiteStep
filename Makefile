@@ -177,6 +177,10 @@ UTILOBJS = \
 .PHONY: all
 all: setup $(DLL) $(HOOKDLL) $(EXE)
 
+.PHONY: test
+test:
+	$(MAKE) -f Makefile.test
+
 # litestep.exe
 $(EXE): setup $(UTILOBJS) $(EXEOBJS) $(EXERES)
 	$(CXX) $(LDFLAGS) -Wl,--subsystem,windows,-Map,$(EXEMAP) -o $(EXE) $(UTILOBJS) $(EXEOBJS) $(EXERES) $(EXELIBS)
